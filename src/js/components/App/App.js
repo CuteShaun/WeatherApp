@@ -31,13 +31,13 @@ export default class App extends Component {
 
         Promise.all(
           urlArr.map(url => fetch(url)
-            .then((response) => {
-              if (response.ok) {
-                return response.json();
-              }
-              throw new Error(response.statusText);
-            })
-            .then(searchResult => searchResult)),
+              .then((response) => {
+                if (response.ok) {
+                  return response.json();
+                }
+                throw new Error(response.statusText);
+              })
+              .then(searchResult => searchResult),),
         ).then((arrPromise) => {
           this._render(arrPromise);
         });
@@ -63,13 +63,13 @@ export default class App extends Component {
 
       Promise.all(
         urlArr.map(url => fetch(url)
-          .then((response) => {
-            if (response.ok) {
-              return response.json();
-            }
-            throw new Error(response.statusText);
-          })
-          .then(searchResult => searchResult)),
+            .then((response) => {
+              if (response.ok) {
+                return response.json();
+              }
+              throw new Error(response.statusText);
+            })
+            .then(searchResult => searchResult),),
       ).then((arrPromise) => {
         this._render(arrPromise);
       });
@@ -82,7 +82,7 @@ export default class App extends Component {
 
   render(data) {
     if (data === undefined) {
-      return '';
+      data = '';
     }
 
     this.props.data = data;
@@ -92,6 +92,52 @@ export default class App extends Component {
 
     const w1 = document.createDocumentFragment();
     new Wind(w1, { speed: 100500, unit: 'mph' });
+
+    if (data === '') {
+      return [
+        {
+          tag: 'div',
+          classList: ['container'],
+          children: [
+            {
+              tag: 'div',
+              classList: ['row'],
+              children: [
+                {
+                  tag: 'h3',
+                  content: 'Weather forecast from Odessa mother',
+                  classList: ['main-title'],
+                },
+
+                {
+                  tag: SearchForm,
+                  props: {
+                    eventHandlers: [
+                      {
+                        eventType: 'submit',
+                        handler: this.onSubmit,
+                      },
+                    ],
+                    attributes: [
+                      {
+                        name: 'id',
+                        value: 'search-form',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+
+        {
+          tag: 'footer',
+          content:
+            'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
+        },
+      ];
+    }
 
     return [
       {
@@ -138,7 +184,8 @@ export default class App extends Component {
 
           {
             tag: 'footer',
-            content: 'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
+            content:
+              'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
           },
         ],
       },

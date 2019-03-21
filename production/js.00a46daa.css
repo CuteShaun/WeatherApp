@@ -27,7 +27,10 @@ body {
   background-size: cover; }
   @media (max-width: 500px) {
     .wrapper {
-      height: 107vh; } }
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 0; } }
 
 .container {
   width: 100%;
@@ -53,6 +56,9 @@ body {
 .row {
   margin-left: -15px;
   margin-right: -15px; }
+  @media (max-width: 500px) {
+    .row {
+      padding-bottom: 100px; } }
   @media (max-width: 410px) {
     .row {
       margin-left: -5px;
@@ -88,7 +94,7 @@ body {
     .weather-forecast-info__city-name {
       font-size: 2.2rem; } }
 
-@media (max-width: 410px) {
+@media (max-width: 500px) {
   .weather-forecast-info__icon {
     width: 64px;
     height: 64px; } }
@@ -110,10 +116,17 @@ body {
     .forecast-form__input {
       height: auto;
       padding: 10px; } }
+  @media (max-width: 500px) {
+    .forecast-form__input {
+      width: 100%; } }
 
 @media (max-width: 850px) {
   .forecast-form {
     display: flex; } }
+
+@media (max-width: 500px) {
+  .forecast-form {
+    flex-direction: column; } }
 
 .forecast-form__button {
   appearance: none;
@@ -137,7 +150,8 @@ body {
       padding: 10px; } }
   @media (max-width: 500px) {
     .forecast-form__button {
-      font-size: 1.6rem; } }
+      font-size: 1.6rem;
+      width: 100%; } }
 
 .weather-forecast-add-info {
   width: 30%; }
@@ -164,6 +178,12 @@ body {
   background-color: rgba(0, 0, 0, 0.6); }
   .weather-forecast-add-info__temp div {
     text-align: center; }
+  @media (max-width: 500px) {
+    .weather-forecast-add-info__temp {
+      font-size: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center; } }
 
 .weather-forecast-add-info__wind,
 .weather-forecast-add-info__humadity {
@@ -248,12 +268,18 @@ body {
         height: 40px; } }
 
 footer {
+  width: 100%;
   text-align: center;
   color: white;
-  margin-top: 30px; }
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding-bottom: 10px; }
 
 .copyright {
   display: block; }
 
-.link:hover {
-  color: orange; }
+.link {
+  color: khaki; }
+  .link:hover {
+    color: orange; }

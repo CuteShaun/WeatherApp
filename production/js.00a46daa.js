@@ -12706,7 +12706,15 @@ var WeatherForecast =
 function (_Component) {
   _inherits(WeatherForecast, _Component);
 
-  function WeatherForecast(host, props) {
+  function WeatherForecast(host) {
+    var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
+      todayData: {
+        sys: {
+          country: ''
+        }
+      }
+    };
+
     _classCallCheck(this, WeatherForecast);
 
     return _possibleConstructorReturn(this, _getPrototypeOf(WeatherForecast).call(this, host, props));
@@ -12715,6 +12723,10 @@ function (_Component) {
   _createClass(WeatherForecast, [{
     key: "setOdessaTips",
     value: function setOdessaTips() {
+      if (this.props.fiveDayData === undefined) {
+        return '';
+      }
+
       var temp = Math.round(this.props.todayData.main.temp);
 
       if (temp >= 25) {
@@ -12749,9 +12761,11 @@ function (_Component) {
       var description;
 
       if (index) {
-        description = this.props.fiveDayData.list[index].weather[0].main; // console.log(description);
+        description = this.props.fiveDayData.list[index].weather[0].main;
+      } else if (this.props.fiveDayData === undefined) {
+        description = '';
       } else {
-        description = this.props.todayData.weather[0].main; // console.log(description);
+        description = this.props.todayData.weather[0].main;
       }
 
       if (description === 'Clouds') {
@@ -12812,7 +12826,7 @@ function (_Component) {
                 children: [{
                   tag: 'span',
                   classList: ['weather-forecast-info__country-name'],
-                  content: ", ".concat(this.props.todayData.sys.country)
+                  content: this.props.todayData.sys.country
                 }]
               }, {
                 tag: 'div',
@@ -13165,7 +13179,7 @@ function (_Component) {
     key: "render",
     value: function render(data) {
       if (data === undefined) {
-        return '';
+        data = '';
       }
 
       this.props.data = data;
@@ -13179,6 +13193,38 @@ function (_Component) {
         speed: 100500,
         unit: 'mph'
       });
+
+      if (data === '') {
+        return [{
+          tag: 'div',
+          classList: ['container'],
+          children: [{
+            tag: 'div',
+            classList: ['row'],
+            children: [{
+              tag: 'h3',
+              content: 'Weather forecast from Odessa mother',
+              classList: ['main-title']
+            }, {
+              tag: _SearchForm.SearchForm,
+              props: {
+                eventHandlers: [{
+                  eventType: 'submit',
+                  handler: this.onSubmit
+                }],
+                attributes: [{
+                  name: 'id',
+                  value: 'search-form'
+                }]
+              }
+            }]
+          }]
+        }, {
+          tag: 'footer',
+          content: 'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>'
+        }];
+      }
+
       return [{
         tag: 'div',
         classList: ['container'],
@@ -13271,7 +13317,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59709" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49351" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

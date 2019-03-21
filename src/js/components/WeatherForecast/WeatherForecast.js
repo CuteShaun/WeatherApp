@@ -13,13 +13,25 @@ import haze from '../../../img/haze.png';
 import fog from '../../../img/fog.png';
 
 export default class WeatherForecast extends Component {
-  constructor(host, props) {
+  constructor(
+    host,
+    props = {
+      todayData: {
+        sys: {
+          country: '',
+        },
+      },
+    },
+  ) {
     super(host, props);
   }
 
   setOdessaTips() {
-    const temp = Math.round(this.props.todayData.main.temp);
+    if (this.props.fiveDayData === undefined) {
+      return '';
+    }
 
+    const temp = Math.round(this.props.todayData.main.temp);
 
     if (temp >= 25) {
       return 'Это вы селёдку на привозе купили, или то вам так жарко?';
@@ -51,15 +63,13 @@ export default class WeatherForecast extends Component {
   chooseIcons(index) {
     let description;
 
-
     if (index) {
       description = this.props.fiveDayData.list[index].weather[0].main;
-      // console.log(description);
+    } else if (this.props.fiveDayData === undefined) {
+      description = '';
     } else {
       description = this.props.todayData.weather[0].main;
-      // console.log(description);
     }
-
 
     if (description === 'Clouds') {
       return `${cloudy}`;
@@ -94,6 +104,7 @@ export default class WeatherForecast extends Component {
 
   render() {
     console.log(this.props, 'fivedayData');
+
     return [
       {
         tag: 'div',
@@ -126,7 +137,7 @@ export default class WeatherForecast extends Component {
                           {
                             tag: 'span',
                             classList: ['weather-forecast-info__country-name'],
-                            content: `, ${this.props.todayData.sys.country}`,
+                            content: this.props.todayData.sys.country,
                           },
                         ],
                       },
