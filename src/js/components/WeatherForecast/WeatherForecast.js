@@ -132,7 +132,7 @@ export default class WeatherForecast extends Component {
                       {
                         tag: 'h1',
                         classList: ['weather-forecast-info__city-name'],
-                        content: this.props.todayData.name,
+                        content: `${this.props.todayData.name}, `,
                         children: [
                           {
                             tag: 'span',
