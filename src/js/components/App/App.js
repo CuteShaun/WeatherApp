@@ -128,13 +128,12 @@ export default class App extends Component {
                 },
               ],
             },
+            {
+              tag: 'footer',
+              content:
+                'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
+            },
           ],
-        },
-
-        {
-          tag: 'footer',
-          content:
-            'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
         },
       ];
     }
@@ -181,7 +180,6 @@ export default class App extends Component {
               },
             ],
           },
-
           {
             tag: 'footer',
             content:

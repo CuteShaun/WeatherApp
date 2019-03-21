@@ -13,7 +13,7 @@ html {
       font-size: 55%; } }
   @media (max-width: 620px) {
     html {
-      font-size: 50%; } }
+      font-size: 52%; } }
 
 body {
   margin: 0;
@@ -22,18 +22,18 @@ body {
 
 .wrapper {
   min-height: 100vh;
-  padding-top: 50px;
+  padding-top: 100px;
   background-image: linear-gradient(to right bottom, rgba(251, 229, 205, 0.3), rgba(237, 178, 177, 0.4)), url(odessa.b6cecc3d.jpg);
   background-size: cover; }
   @media (max-width: 500px) {
     .wrapper {
-      height: 100vh;
       display: flex;
-      align-items: center;
-      padding-top: 0; } }
+      background-position: top center; } }
 
 .container {
   width: 100%;
+  display: flex;
+  flex-direction: column;
   max-width: 800px;
   padding-left: 15px;
   padding-right: 15px;
@@ -55,10 +55,8 @@ body {
 
 .row {
   margin-left: -15px;
-  margin-right: -15px; }
-  @media (max-width: 500px) {
-    .row {
-      padding-bottom: 100px; } }
+  margin-right: -15px;
+  margin-bottom: 50px; }
   @media (max-width: 410px) {
     .row {
       margin-left: -5px;
@@ -113,8 +111,8 @@ body {
   width: 70%;
   height: 53px;
   padding: 15px;
-  font-size: 1.6rem;
-  border-radius: 3px 0 0 0; }
+  font-size: 1.8rem;
+  border-radius: 3px 0 0 3px; }
   @media (max-width: 850px) {
     .forecast-form__input {
       height: auto;
@@ -141,7 +139,7 @@ body {
   height: 53px;
   padding: 15px;
   background-color: #3eb060;
-  border-radius: 0 3px 0 0;
+  border-radius: 0 3px 3px 0;
   color: black;
   box-shadow: inset 0 0 10px darkgreen; }
   .forecast-form__button:hover {
@@ -153,7 +151,7 @@ body {
       padding: 10px; } }
   @media (max-width: 500px) {
     .forecast-form__button {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       width: 100%; } }
 
 .weather-forecast-add-info {
@@ -274,10 +272,7 @@ footer {
   width: 100%;
   text-align: center;
   color: white;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  padding-bottom: 10px; }
+  margin-top: auto; }
 
 .copyright {
   display: block; }

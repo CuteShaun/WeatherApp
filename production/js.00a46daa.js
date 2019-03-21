@@ -13218,10 +13218,10 @@ function (_Component) {
                 }]
               }
             }]
+          }, {
+            tag: 'footer',
+            content: 'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>'
           }]
-        }, {
-          tag: 'footer',
-          content: 'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>'
         }];
       }
 
@@ -13317,7 +13317,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56270" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59764" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
