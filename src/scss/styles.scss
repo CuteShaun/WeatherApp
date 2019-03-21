@@ -37,6 +37,11 @@ body {
     ),
     url(../img/odessa.jpg);
   background-size: cover;
+
+
+  @media (max-width: 500px) {
+    height: 107vh;
+  }
 }
 
 .container {
