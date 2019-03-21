@@ -473,136 +473,7 @@ Object.defineProperty(exports, "Wind", {
 var _Wind = _interopRequireDefault(require("./Wind"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./Wind":"js/components/Wind/Wind.js"}],"../node_modules/is-obj/index.js":[function(require,module,exports) {
-'use strict';
-
-module.exports = function (x) {
-  var type = typeof x;
-  return x !== null && (type === 'object' || type === 'function');
-};
-},{}],"../node_modules/dot-prop/index.js":[function(require,module,exports) {
-'use strict';
-
-const isObj = require('is-obj');
-
-function getPathSegments(path) {
-  const pathArr = path.split('.');
-  const parts = [];
-
-  for (let i = 0; i < pathArr.length; i++) {
-    let p = pathArr[i];
-
-    while (p[p.length - 1] === '\\' && pathArr[i + 1] !== undefined) {
-      p = p.slice(0, -1) + '.';
-      p += pathArr[++i];
-    }
-
-    parts.push(p);
-  }
-
-  return parts;
-}
-
-module.exports = {
-  get: function (obj, path, value) {
-    if (!isObj(obj) || typeof path !== 'string') {
-      return value === undefined ? obj : value;
-    }
-
-    const pathArr = getPathSegments(path);
-
-    for (let i = 0; i < pathArr.length; i++) {
-      if (!Object.prototype.propertyIsEnumerable.call(obj, pathArr[i])) {
-        return value;
-      }
-
-      obj = obj[pathArr[i]];
-
-      if (obj === undefined || obj === null) {
-        // `obj` is either `undefined` or `null` so we want to stop the loop, and
-        // if this is not the last bit of the path, and
-        // if it did't return `undefined`
-        // it would return `null` if `obj` is `null`
-        // but we want `get({foo: null}, 'foo.bar')` to equal `undefined`, or the supplied value, not `null`
-        if (i !== pathArr.length - 1) {
-          return value;
-        }
-
-        break;
-      }
-    }
-
-    return obj;
-  },
-  set: function (obj, path, value) {
-    if (!isObj(obj) || typeof path !== 'string') {
-      return obj;
-    }
-
-    const root = obj;
-    const pathArr = getPathSegments(path);
-
-    for (let i = 0; i < pathArr.length; i++) {
-      const p = pathArr[i];
-
-      if (!isObj(obj[p])) {
-        obj[p] = {};
-      }
-
-      if (i === pathArr.length - 1) {
-        obj[p] = value;
-      }
-
-      obj = obj[p];
-    }
-
-    return root;
-  },
-  delete: function (obj, path) {
-    if (!isObj(obj) || typeof path !== 'string') {
-      return;
-    }
-
-    const pathArr = getPathSegments(path);
-
-    for (let i = 0; i < pathArr.length; i++) {
-      const p = pathArr[i];
-
-      if (i === pathArr.length - 1) {
-        delete obj[p];
-        return;
-      }
-
-      obj = obj[p];
-
-      if (!isObj(obj)) {
-        return;
-      }
-    }
-  },
-  has: function (obj, path) {
-    if (!isObj(obj) || typeof path !== 'string') {
-      return false;
-    }
-
-    const pathArr = getPathSegments(path);
-
-    for (let i = 0; i < pathArr.length; i++) {
-      if (isObj(obj)) {
-        if (!(pathArr[i] in obj)) {
-          return false;
-        }
-
-        obj = obj[pathArr[i]];
-      } else {
-        return false;
-      }
-    }
-
-    return true;
-  }
-};
-},{"is-obj":"../node_modules/is-obj/index.js"}],"../node_modules/indexes-of/index.js":[function(require,module,exports) {
+},{"./Wind":"js/components/Wind/Wind.js"}],"../node_modules/indexes-of/index.js":[function(require,module,exports) {
 module.exports = function (ary, item) {
   var i = -1, indexes = []
   while((i = ary.indexOf(item, i + 1)) !== -1)
@@ -669,27 +540,158 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}],"../node_modules/postcss-selector-parser/dist/selectors/node.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof2(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof2 = function (obj) { return typeof obj; }; } else { _typeof2 = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
+},{}],"../node_modules/postcss-selector-parser/dist/util/unesc.js":[function(require,module,exports) {
+"use strict";
 
 exports.__esModule = true;
+exports.default = unesc;
+var whitespace = '[\\x20\\t\\r\\n\\f]';
+var unescapeRegExp = new RegExp('\\\\([\\da-f]{1,6}' + whitespace + '?|(' + whitespace + ')|.)', 'ig');
 
-var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-  return _typeof2(obj);
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : _typeof2(obj);
-};
+function unesc(str) {
+  return str.replace(unescapeRegExp, function (_, escaped, escapedWhitespace) {
+    var high = '0x' + escaped - 0x10000; // NaN means non-codepoint
+    // Workaround erroneous numeric interpretation of +"0x"
+    // eslint-disable-next-line no-self-compare
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+    return high !== high || escapedWhitespace ? escaped : high < 0 ? // BMP codepoint
+    String.fromCharCode(high + 0x10000) : // Supplemental Plane codepoint (surrogate pair)
+    String.fromCharCode(high >> 10 | 0xd800, high & 0x3ff | 0xdc00);
+  });
+}
+
+module.exports = exports.default;
+},{}],"../node_modules/postcss-selector-parser/dist/util/getProp.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = getProp;
+
+function getProp(obj) {
+  for (var _len = arguments.length, props = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    props[_key - 1] = arguments[_key];
+  }
+
+  while (props.length > 0) {
+    var prop = props.shift();
+
+    if (!obj[prop]) {
+      return undefined;
+    }
+
+    obj = obj[prop];
+  }
+
+  return obj;
+}
+
+module.exports = exports.default;
+},{}],"../node_modules/postcss-selector-parser/dist/util/ensureObject.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = ensureObject;
+
+function ensureObject(obj) {
+  for (var _len = arguments.length, props = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    props[_key - 1] = arguments[_key];
+  }
+
+  while (props.length > 0) {
+    var prop = props.shift();
+
+    if (!obj[prop]) {
+      obj[prop] = {};
+    }
+
+    obj = obj[prop];
   }
 }
 
+module.exports = exports.default;
+},{}],"../node_modules/postcss-selector-parser/dist/util/stripComments.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = stripComments;
+
+function stripComments(str) {
+  var s = "";
+  var commentStart = str.indexOf("/*");
+  var lastEnd = 0;
+
+  while (commentStart >= 0) {
+    s = s + str.slice(lastEnd, commentStart);
+    var commentEnd = str.indexOf("*/", commentStart + 2);
+
+    if (commentEnd < 0) {
+      return s;
+    }
+
+    lastEnd = commentEnd + 2;
+    commentStart = str.indexOf("/*", lastEnd);
+  }
+
+  s = s + str.slice(lastEnd);
+  return s;
+}
+
+module.exports = exports.default;
+},{}],"../node_modules/postcss-selector-parser/dist/util/index.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.stripComments = exports.ensureObject = exports.getProp = exports.unesc = void 0;
+
+var _unesc = _interopRequireDefault(require("./unesc"));
+
+exports.unesc = _unesc.default;
+
+var _getProp = _interopRequireDefault(require("./getProp"));
+
+exports.getProp = _getProp.default;
+
+var _ensureObject = _interopRequireDefault(require("./ensureObject"));
+
+exports.ensureObject = _ensureObject.default;
+
+var _stripComments = _interopRequireDefault(require("./stripComments"));
+
+exports.stripComments = _stripComments.default;
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+}
+},{"./unesc":"../node_modules/postcss-selector-parser/dist/util/unesc.js","./getProp":"../node_modules/postcss-selector-parser/dist/util/getProp.js","./ensureObject":"../node_modules/postcss-selector-parser/dist/util/ensureObject.js","./stripComments":"../node_modules/postcss-selector-parser/dist/util/stripComments.js"}],"../node_modules/postcss-selector-parser/dist/selectors/node.js":[function(require,module,exports) {
+"use strict";
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+exports.__esModule = true;
+exports.default = void 0;
+
+var _util = require("../util");
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
 var cloneNode = function cloneNode(obj, parent) {
-  if ((typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) !== 'object') {
+  if (_typeof(obj) !== 'object' || obj === null) {
     return obj;
   }
 
@@ -701,7 +703,8 @@ var cloneNode = function cloneNode(obj, parent) {
     }
 
     var value = obj[i];
-    var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+
+    var type = _typeof(value);
 
     if (i === 'parent' && type === 'object') {
       if (parent) {
@@ -719,11 +722,13 @@ var cloneNode = function cloneNode(obj, parent) {
   return cloned;
 };
 
-var _class = function () {
-  function _class() {
-    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-    _classCallCheck(this, _class);
+var Node =
+/*#__PURE__*/
+function () {
+  function Node(opts) {
+    if (opts === void 0) {
+      opts = {};
+    }
 
     Object.assign(this, opts);
     this.spaces = this.spaces || {};
@@ -731,7 +736,9 @@ var _class = function () {
     this.spaces.after = this.spaces.after || '';
   }
 
-  _class.prototype.remove = function remove() {
+  var _proto = Node.prototype;
+
+  _proto.remove = function remove() {
     if (this.parent) {
       this.parent.removeChild(this);
     }
@@ -740,7 +747,7 @@ var _class = function () {
     return this;
   };
 
-  _class.prototype.replaceWith = function replaceWith() {
+  _proto.replaceWith = function replaceWith() {
     if (this.parent) {
       for (var index in arguments) {
         this.parent.insertBefore(this, arguments[index]);
@@ -752,16 +759,19 @@ var _class = function () {
     return this;
   };
 
-  _class.prototype.next = function next() {
+  _proto.next = function next() {
     return this.parent.at(this.parent.index(this) + 1);
   };
 
-  _class.prototype.prev = function prev() {
+  _proto.prev = function prev() {
     return this.parent.at(this.parent.index(this) - 1);
   };
 
-  _class.prototype.clone = function clone() {
-    var overrides = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  _proto.clone = function clone(overrides) {
+    if (overrides === void 0) {
+      overrides = {};
+    }
+
     var cloned = cloneNode(this);
 
     for (var name in overrides) {
@@ -769,65 +779,182 @@ var _class = function () {
     }
 
     return cloned;
-  };
+  }
+  /**
+   * Some non-standard syntax doesn't follow normal escaping rules for css.
+   * This allows non standard syntax to be appended to an existing property
+   * by specifying the escaped value. By specifying the escaped value,
+   * illegal characters are allowed to be directly inserted into css output.
+   * @param {string} name the property to set
+   * @param {any} value the unescaped value of the property
+   * @param {string} valueEscaped optional. the escaped value of the property.
+   */
+  ;
 
-  _class.prototype.toString = function toString() {
-    return [this.spaces.before, String(this.value), this.spaces.after].join('');
-  };
+  _proto.appendToPropertyAndEscape = function appendToPropertyAndEscape(name, value, valueEscaped) {
+    if (!this.raws) {
+      this.raws = {};
+    }
 
-  return _class;
-}();
+    var originalValue = this[name];
+    var originalEscaped = this.raws[name];
+    this[name] = originalValue + value; // this may trigger a setter that updates raws, so it has to be set first.
 
-exports.default = _class;
-module.exports = exports['default'];
-},{}],"../node_modules/postcss-selector-parser/dist/selectors/types.js":[function(require,module,exports) {
-'use strict';
-
-exports.__esModule = true;
-var TAG = exports.TAG = 'tag';
-var STRING = exports.STRING = 'string';
-var SELECTOR = exports.SELECTOR = 'selector';
-var ROOT = exports.ROOT = 'root';
-var PSEUDO = exports.PSEUDO = 'pseudo';
-var NESTING = exports.NESTING = 'nesting';
-var ID = exports.ID = 'id';
-var COMMENT = exports.COMMENT = 'comment';
-var COMBINATOR = exports.COMBINATOR = 'combinator';
-var CLASS = exports.CLASS = 'class';
-var ATTRIBUTE = exports.ATTRIBUTE = 'attribute';
-var UNIVERSAL = exports.UNIVERSAL = 'universal';
-},{}],"../node_modules/postcss-selector-parser/dist/selectors/container.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-exports.__esModule = true;
-
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
+    if (originalEscaped || valueEscaped !== value) {
+      this.raws[name] = (originalEscaped || originalValue) + valueEscaped;
+    } else {
+      delete this.raws[name]; // delete any escaped value that was created by the setter.
     }
   }
+  /**
+   * Some non-standard syntax doesn't follow normal escaping rules for css.
+   * This allows the escaped value to be specified directly, allowing illegal
+   * characters to be directly inserted into css output.
+   * @param {string} name the property to set
+   * @param {any} value the unescaped value of the property
+   * @param {string} valueEscaped the escaped value of the property.
+   */
+  ;
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
+  _proto.setPropertyAndEscape = function setPropertyAndEscape(name, value, valueEscaped) {
+    if (!this.raws) {
+      this.raws = {};
+    }
+
+    this[name] = value; // this may trigger a setter that updates raws, so it has to be set first.
+
+    this.raws[name] = valueEscaped;
+  }
+  /**
+   * When you want a value to passed through to CSS directly. This method
+   * deletes the corresponding raw value causing the stringifier to fallback
+   * to the unescaped value.
+   * @param {string} name the property to set.
+   * @param {any} value The value that is both escaped and unescaped.
+   */
+  ;
+
+  _proto.setPropertyWithoutEscape = function setPropertyWithoutEscape(name, value) {
+    this[name] = value; // this may trigger a setter that updates raws, so it has to be set first.
+
+    if (this.raws) {
+      delete this.raws[name];
+    }
+  }
+  /**
+   * 
+   * @param {number} line The number (starting with 1)
+   * @param {number} column The column number (starting with 1)
+   */
+  ;
+
+  _proto.isAtPosition = function isAtPosition(line, column) {
+    if (this.source && this.source.start && this.source.end) {
+      if (this.source.start.line > line) {
+        return false;
+      }
+
+      if (this.source.end.line < line) {
+        return false;
+      }
+
+      if (this.source.start.line === line && this.source.start.column > column) {
+        return false;
+      }
+
+      if (this.source.end.line === line && this.source.end.column < column) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return undefined;
   };
+
+  _proto.stringifyProperty = function stringifyProperty(name) {
+    return this.raws && this.raws[name] || this[name];
+  };
+
+  _proto.toString = function toString() {
+    return [this.rawSpaceBefore, String(this.stringifyProperty("value")), this.rawSpaceAfter].join('');
+  };
+
+  _createClass(Node, [{
+    key: "rawSpaceBefore",
+    get: function get() {
+      var rawSpace = this.raws && this.raws.spaces && this.raws.spaces.before;
+
+      if (rawSpace === undefined) {
+        rawSpace = this.spaces && this.spaces.before;
+      }
+
+      return rawSpace || "";
+    },
+    set: function set(raw) {
+      (0, _util.ensureObject)(this, "raws", "spaces");
+      this.raws.spaces.before = raw;
+    }
+  }, {
+    key: "rawSpaceAfter",
+    get: function get() {
+      var rawSpace = this.raws && this.raws.spaces && this.raws.spaces.after;
+
+      if (rawSpace === undefined) {
+        rawSpace = this.spaces.after;
+      }
+
+      return rawSpace || "";
+    },
+    set: function set(raw) {
+      (0, _util.ensureObject)(this, "raws", "spaces");
+      this.raws.spaces.after = raw;
+    }
+  }]);
+
+  return Node;
 }();
 
-var _node = require('./node');
+exports.default = Node;
+module.exports = exports.default;
+},{"../util":"../node_modules/postcss-selector-parser/dist/util/index.js"}],"../node_modules/postcss-selector-parser/dist/selectors/types.js":[function(require,module,exports) {
+"use strict";
 
-var _node2 = _interopRequireDefault(_node);
+exports.__esModule = true;
+exports.UNIVERSAL = exports.ATTRIBUTE = exports.CLASS = exports.COMBINATOR = exports.COMMENT = exports.ID = exports.NESTING = exports.PSEUDO = exports.ROOT = exports.SELECTOR = exports.STRING = exports.TAG = void 0;
+var TAG = 'tag';
+exports.TAG = TAG;
+var STRING = 'string';
+exports.STRING = STRING;
+var SELECTOR = 'selector';
+exports.SELECTOR = SELECTOR;
+var ROOT = 'root';
+exports.ROOT = ROOT;
+var PSEUDO = 'pseudo';
+exports.PSEUDO = PSEUDO;
+var NESTING = 'nesting';
+exports.NESTING = NESTING;
+var ID = 'id';
+exports.ID = ID;
+var COMMENT = 'comment';
+exports.COMMENT = COMMENT;
+var COMBINATOR = 'combinator';
+exports.COMBINATOR = COMBINATOR;
+var CLASS = 'class';
+exports.CLASS = CLASS;
+var ATTRIBUTE = 'attribute';
+exports.ATTRIBUTE = ATTRIBUTE;
+var UNIVERSAL = 'universal';
+exports.UNIVERSAL = UNIVERSAL;
+},{}],"../node_modules/postcss-selector-parser/dist/selectors/container.js":[function(require,module,exports) {
+"use strict";
 
-var _types = require('./types');
+exports.__esModule = true;
+exports.default = void 0;
 
-var types = _interopRequireWildcard(_types);
+var _node = _interopRequireDefault(require("./node"));
+
+var types = _interopRequireWildcard(require("./types"));
 
 function _interopRequireWildcard(obj) {
   if (obj && obj.__esModule) {
@@ -837,7 +964,15 @@ function _interopRequireWildcard(obj) {
 
     if (obj != null) {
       for (var key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {};
+
+          if (desc.get || desc.set) {
+            Object.defineProperty(newObj, key, desc);
+          } else {
+            newObj[key] = obj[key];
+          }
+        }
       }
     }
 
@@ -852,43 +987,37 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
 }
 
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-var Container = function (_Node) {
-  _inherits(Container, _Node);
+var Container =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(Container, _Node);
 
   function Container(opts) {
-    _classCallCheck(this, Container);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Node.call(this, opts));
+    _this = _Node.call(this, opts) || this;
 
     if (!_this.nodes) {
       _this.nodes = [];
@@ -897,23 +1026,25 @@ var Container = function (_Node) {
     return _this;
   }
 
-  Container.prototype.append = function append(selector) {
+  var _proto = Container.prototype;
+
+  _proto.append = function append(selector) {
     selector.parent = this;
     this.nodes.push(selector);
     return this;
   };
 
-  Container.prototype.prepend = function prepend(selector) {
+  _proto.prepend = function prepend(selector) {
     selector.parent = this;
     this.nodes.unshift(selector);
     return this;
   };
 
-  Container.prototype.at = function at(index) {
+  _proto.at = function at(index) {
     return this.nodes[index];
   };
 
-  Container.prototype.index = function index(child) {
+  _proto.index = function index(child) {
     if (typeof child === 'number') {
       return child;
     }
@@ -921,11 +1052,11 @@ var Container = function (_Node) {
     return this.nodes.indexOf(child);
   };
 
-  Container.prototype.removeChild = function removeChild(child) {
+  _proto.removeChild = function removeChild(child) {
     child = this.index(child);
     this.at(child).parent = undefined;
     this.nodes.splice(child, 1);
-    var index = void 0;
+    var index;
 
     for (var id in this.indexes) {
       index = this.indexes[id];
@@ -938,7 +1069,7 @@ var Container = function (_Node) {
     return this;
   };
 
-  Container.prototype.removeAll = function removeAll() {
+  _proto.removeAll = function removeAll() {
     for (var _iterator = this.nodes, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
       var _ref;
 
@@ -959,16 +1090,16 @@ var Container = function (_Node) {
     return this;
   };
 
-  Container.prototype.empty = function empty() {
+  _proto.empty = function empty() {
     return this.removeAll();
   };
 
-  Container.prototype.insertAfter = function insertAfter(oldNode, newNode) {
+  _proto.insertAfter = function insertAfter(oldNode, newNode) {
     newNode.parent = this;
     var oldIndex = this.index(oldNode);
     this.nodes.splice(oldIndex + 1, 0, newNode);
     newNode.parent = this;
-    var index = void 0;
+    var index;
 
     for (var id in this.indexes) {
       index = this.indexes[id];
@@ -981,12 +1112,12 @@ var Container = function (_Node) {
     return this;
   };
 
-  Container.prototype.insertBefore = function insertBefore(oldNode, newNode) {
+  _proto.insertBefore = function insertBefore(oldNode, newNode) {
     newNode.parent = this;
     var oldIndex = this.index(oldNode);
     this.nodes.splice(oldIndex, 0, newNode);
     newNode.parent = this;
-    var index = void 0;
+    var index;
 
     for (var id in this.indexes) {
       index = this.indexes[id];
@@ -999,7 +1130,55 @@ var Container = function (_Node) {
     return this;
   };
 
-  Container.prototype.each = function each(callback) {
+  _proto._findChildAtPosition = function _findChildAtPosition(line, col) {
+    var found = undefined;
+    this.each(function (node) {
+      if (node.atPosition) {
+        var foundChild = node.atPosition(line, col);
+
+        if (foundChild) {
+          found = foundChild;
+          return false;
+        }
+      } else if (node.isAtPosition(line, col)) {
+        found = node;
+        return false;
+      }
+    });
+    return found;
+  }
+  /**
+   * Return the most specific node at the line and column number given.
+   * The source location is based on the original parsed location, locations aren't
+   * updated as selector nodes are mutated.
+   * 
+   * Note that this location is relative to the location of the first character
+   * of the selector, and not the location of the selector in the overall document
+   * when used in conjunction with postcss.
+   *
+   * If not found, returns undefined.
+   * @param {number} line The line number of the node to find. (1-based index)
+   * @param {number} col  The column number of the node to find. (1-based index)
+   */
+  ;
+
+  _proto.atPosition = function atPosition(line, col) {
+    if (this.isAtPosition(line, col)) {
+      return this._findChildAtPosition(line, col) || this;
+    } else {
+      return undefined;
+    }
+  };
+
+  _proto._inferEndPosition = function _inferEndPosition() {
+    if (this.last && this.last.source && this.last.source.end) {
+      this.source = this.source || {};
+      this.source.end = this.source.end || {};
+      Object.assign(this.source.end, this.last.source.end);
+    }
+  };
+
+  _proto.each = function each(callback) {
     if (!this.lastEach) {
       this.lastEach = 0;
     }
@@ -1016,8 +1195,7 @@ var Container = function (_Node) {
       return undefined;
     }
 
-    var index = void 0,
-        result = void 0;
+    var index, result;
 
     while (this.indexes[id] < this.length) {
       index = this.indexes[id];
@@ -1037,7 +1215,7 @@ var Container = function (_Node) {
     }
   };
 
-  Container.prototype.walk = function walk(callback) {
+  _proto.walk = function walk(callback) {
     return this.each(function (node, i) {
       var result = callback(node, i);
 
@@ -1051,7 +1229,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkAttributes = function walkAttributes(callback) {
+  _proto.walkAttributes = function walkAttributes(callback) {
     var _this2 = this;
 
     return this.walk(function (selector) {
@@ -1061,7 +1239,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkClasses = function walkClasses(callback) {
+  _proto.walkClasses = function walkClasses(callback) {
     var _this3 = this;
 
     return this.walk(function (selector) {
@@ -1071,7 +1249,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkCombinators = function walkCombinators(callback) {
+  _proto.walkCombinators = function walkCombinators(callback) {
     var _this4 = this;
 
     return this.walk(function (selector) {
@@ -1081,7 +1259,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkComments = function walkComments(callback) {
+  _proto.walkComments = function walkComments(callback) {
     var _this5 = this;
 
     return this.walk(function (selector) {
@@ -1091,7 +1269,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkIds = function walkIds(callback) {
+  _proto.walkIds = function walkIds(callback) {
     var _this6 = this;
 
     return this.walk(function (selector) {
@@ -1101,7 +1279,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkNesting = function walkNesting(callback) {
+  _proto.walkNesting = function walkNesting(callback) {
     var _this7 = this;
 
     return this.walk(function (selector) {
@@ -1111,7 +1289,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkPseudos = function walkPseudos(callback) {
+  _proto.walkPseudos = function walkPseudos(callback) {
     var _this8 = this;
 
     return this.walk(function (selector) {
@@ -1121,7 +1299,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkTags = function walkTags(callback) {
+  _proto.walkTags = function walkTags(callback) {
     var _this9 = this;
 
     return this.walk(function (selector) {
@@ -1131,7 +1309,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.walkUniversals = function walkUniversals(callback) {
+  _proto.walkUniversals = function walkUniversals(callback) {
     var _this10 = this;
 
     return this.walk(function (selector) {
@@ -1141,7 +1319,7 @@ var Container = function (_Node) {
     });
   };
 
-  Container.prototype.split = function split(callback) {
+  _proto.split = function split(callback) {
     var _this11 = this;
 
     var current = [];
@@ -1160,86 +1338,65 @@ var Container = function (_Node) {
     }, []);
   };
 
-  Container.prototype.map = function map(callback) {
+  _proto.map = function map(callback) {
     return this.nodes.map(callback);
   };
 
-  Container.prototype.reduce = function reduce(callback, memo) {
+  _proto.reduce = function reduce(callback, memo) {
     return this.nodes.reduce(callback, memo);
   };
 
-  Container.prototype.every = function every(callback) {
+  _proto.every = function every(callback) {
     return this.nodes.every(callback);
   };
 
-  Container.prototype.some = function some(callback) {
+  _proto.some = function some(callback) {
     return this.nodes.some(callback);
   };
 
-  Container.prototype.filter = function filter(callback) {
+  _proto.filter = function filter(callback) {
     return this.nodes.filter(callback);
   };
 
-  Container.prototype.sort = function sort(callback) {
+  _proto.sort = function sort(callback) {
     return this.nodes.sort(callback);
   };
 
-  Container.prototype.toString = function toString() {
+  _proto.toString = function toString() {
     return this.map(String).join('');
   };
 
   _createClass(Container, [{
-    key: 'first',
+    key: "first",
     get: function get() {
       return this.at(0);
     }
   }, {
-    key: 'last',
+    key: "last",
     get: function get() {
       return this.at(this.length - 1);
     }
   }, {
-    key: 'length',
+    key: "length",
     get: function get() {
       return this.nodes.length;
     }
   }]);
 
   return Container;
-}(_node2.default);
+}(_node.default);
 
 exports.default = Container;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/root.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
+var _container = _interopRequireDefault(require("./container"));
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
-
-var _container = require('./container');
-
-var _container2 = _interopRequireDefault(_container);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1247,57 +1404,52 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
 }
 
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-var Root = function (_Container) {
-  _inherits(Root, _Container);
+var Root =
+/*#__PURE__*/
+function (_Container) {
+  _inheritsLoose(Root, _Container);
 
   function Root(opts) {
-    _classCallCheck(this, Root);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Container.call(this, opts));
-
+    _this = _Container.call(this, opts) || this;
     _this.type = _types.ROOT;
     return _this;
   }
 
-  Root.prototype.toString = function toString() {
+  var _proto = Root.prototype;
+
+  _proto.toString = function toString() {
     var str = this.reduce(function (memo, selector) {
-      var sel = String(selector);
-      return sel ? memo + sel + ',' : '';
-    }, '').slice(0, -1);
+      memo.push(String(selector));
+      return memo;
+    }, []).join(',');
     return this.trailingComma ? str + ',' : str;
   };
 
-  Root.prototype.error = function error(message, options) {
+  _proto.error = function error(message, options) {
     if (this._error) {
       return this._error(message, options);
     } else {
@@ -1306,29 +1458,26 @@ var Root = function (_Container) {
   };
 
   _createClass(Root, [{
-    key: 'errorGenerator',
+    key: "errorGenerator",
     set: function set(handler) {
       this._error = handler;
     }
   }]);
 
   return Root;
-}(_container2.default);
+}(_container.default);
 
 exports.default = Root;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./container":"../node_modules/postcss-selector-parser/dist/selectors/container.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/selector.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _container = require('./container');
+var _container = _interopRequireDefault(require("./container"));
 
-var _container2 = _interopRequireDefault(_container);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1336,81 +1485,162 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Selector = function (_Container) {
-  _inherits(Selector, _Container);
+var Selector =
+/*#__PURE__*/
+function (_Container) {
+  _inheritsLoose(Selector, _Container);
 
   function Selector(opts) {
-    _classCallCheck(this, Selector);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Container.call(this, opts));
-
+    _this = _Container.call(this, opts) || this;
     _this.type = _types.SELECTOR;
     return _this;
   }
 
   return Selector;
-}(_container2.default);
+}(_container.default);
 
 exports.default = Selector;
-module.exports = exports['default'];
-},{"./container":"../node_modules/postcss-selector-parser/dist/selectors/container.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/namespace.js":[function(require,module,exports) {
+module.exports = exports.default;
+},{"./container":"../node_modules/postcss-selector-parser/dist/selectors/container.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/cssesc/cssesc.js":[function(require,module,exports) {
+/*! https://mths.be/cssesc v3.0.0 by @mathias */
 'use strict';
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+var object = {};
+var hasOwnProperty = object.hasOwnProperty;
 
-exports.__esModule = true;
-
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
+var merge = function merge(options, defaults) {
+  if (!options) {
+    return defaults;
   }
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+  var result = {};
 
-var _node = require('./node');
+  for (var key in defaults) {
+    // `if (defaults.hasOwnProperty(key) { … }` is not needed here, since
+    // only recognized option names are used.
+    result[key] = hasOwnProperty.call(options, key) ? options[key] : defaults[key];
+  }
 
-var _node2 = _interopRequireDefault(_node);
+  return result;
+};
+
+var regexAnySingleEscape = /[ -,\.\/:-@\[-\^`\{-~]/;
+var regexSingleEscape = /[ -,\.\/:-@\[\]\^`\{-~]/;
+var regexAlwaysEscape = /['"\\]/;
+var regexExcessiveSpaces = /(^|\\+)?(\\[A-F0-9]{1,6})\x20(?![a-fA-F0-9\x20])/g; // https://mathiasbynens.be/notes/css-escapes#css
+
+var cssesc = function cssesc(string, options) {
+  options = merge(options, cssesc.options);
+
+  if (options.quotes != 'single' && options.quotes != 'double') {
+    options.quotes = 'single';
+  }
+
+  var quote = options.quotes == 'double' ? '"' : '\'';
+  var isIdentifier = options.isIdentifier;
+  var firstChar = string.charAt(0);
+  var output = '';
+  var counter = 0;
+  var length = string.length;
+
+  while (counter < length) {
+    var character = string.charAt(counter++);
+    var codePoint = character.charCodeAt();
+    var value = void 0; // If it’s not a printable ASCII character…
+
+    if (codePoint < 0x20 || codePoint > 0x7E) {
+      if (codePoint >= 0xD800 && codePoint <= 0xDBFF && counter < length) {
+        // It’s a high surrogate, and there is a next character.
+        var extra = string.charCodeAt(counter++);
+
+        if ((extra & 0xFC00) == 0xDC00) {
+          // next character is low surrogate
+          codePoint = ((codePoint & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000;
+        } else {
+          // It’s an unmatched surrogate; only append this code unit, in case
+          // the next code unit is the high surrogate of a surrogate pair.
+          counter--;
+        }
+      }
+
+      value = '\\' + codePoint.toString(16).toUpperCase() + ' ';
+    } else {
+      if (options.escapeEverything) {
+        if (regexAnySingleEscape.test(character)) {
+          value = '\\' + character;
+        } else {
+          value = '\\' + codePoint.toString(16).toUpperCase() + ' ';
+        }
+      } else if (/[\t\n\f\r\x0B]/.test(character)) {
+        value = '\\' + codePoint.toString(16).toUpperCase() + ' ';
+      } else if (character == '\\' || !isIdentifier && (character == '"' && quote == character || character == '\'' && quote == character) || isIdentifier && regexSingleEscape.test(character)) {
+        value = '\\' + character;
+      } else {
+        value = character;
+      }
+    }
+
+    output += value;
+  }
+
+  if (isIdentifier) {
+    if (/^-[-\d]/.test(output)) {
+      output = '\\-' + output.slice(1);
+    } else if (/\d/.test(firstChar)) {
+      output = '\\3' + firstChar + ' ' + output.slice(1);
+    }
+  } // Remove spaces after `\HEX` escapes that are not followed by a hex digit,
+  // since they’re redundant. Note that this is only possible if the escape
+  // sequence isn’t preceded by an odd number of backslashes.
+
+
+  output = output.replace(regexExcessiveSpaces, function ($0, $1, $2) {
+    if ($1 && $1.length % 2) {
+      // It’s not safe to remove the space, so don’t.
+      return $0;
+    } // Strip the space.
+
+
+    return ($1 || '') + $2;
+  });
+
+  if (!isIdentifier && options.wrap) {
+    return quote + output + quote;
+  }
+
+  return output;
+}; // Expose default options (so they can be overridden globally).
+
+
+cssesc.options = {
+  'escapeEverything': false,
+  'isIdentifier': false,
+  'quotes': 'single',
+  'wrap': false
+};
+cssesc.version = '3.0.0';
+module.exports = cssesc;
+},{}],"../node_modules/postcss-selector-parser/dist/selectors/className.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = void 0;
+
+var _cssesc = _interopRequireDefault(require("cssesc"));
+
+var _util = require("../util");
+
+var _node = _interopRequireDefault(require("./node"));
+
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1418,86 +1648,266 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
 }
 
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+var ClassName =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(ClassName, _Node);
+
+  function ClassName(opts) {
+    var _this;
+
+    _this = _Node.call(this, opts) || this;
+    _this.type = _types.CLASS;
+    _this._constructed = true;
+    return _this;
   }
 
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
+  var _proto = ClassName.prototype;
+
+  _proto.toString = function toString() {
+    return [this.rawSpaceBefore, String('.' + this.stringifyProperty("value")), this.rawSpaceAfter].join('');
+  };
+
+  _createClass(ClassName, [{
+    key: "value",
+    set: function set(v) {
+      if (this._constructed) {
+        var escaped = (0, _cssesc.default)(v, {
+          isIdentifier: true
+        });
+
+        if (escaped !== v) {
+          (0, _util.ensureObject)(this, "raws");
+          this.raws.value = escaped;
+        } else if (this.raws) {
+          delete this.raws.value;
+        }
+      }
+
+      this._value = v;
+    },
+    get: function get() {
+      return this._value;
     }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  }]);
+
+  return ClassName;
+}(_node.default);
+
+exports.default = ClassName;
+module.exports = exports.default;
+},{"cssesc":"../node_modules/cssesc/cssesc.js","../util":"../node_modules/postcss-selector-parser/dist/util/index.js","./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/comment.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = void 0;
+
+var _node = _interopRequireDefault(require("./node"));
+
+var _types = require("./types");
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
 }
 
-var Namespace = function (_Node) {
-  _inherits(Namespace, _Node);
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+var Comment =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(Comment, _Node);
+
+  function Comment(opts) {
+    var _this;
+
+    _this = _Node.call(this, opts) || this;
+    _this.type = _types.COMMENT;
+    return _this;
+  }
+
+  return Comment;
+}(_node.default);
+
+exports.default = Comment;
+module.exports = exports.default;
+},{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/id.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = void 0;
+
+var _node = _interopRequireDefault(require("./node"));
+
+var _types = require("./types");
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+}
+
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+var ID =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(ID, _Node);
+
+  function ID(opts) {
+    var _this;
+
+    _this = _Node.call(this, opts) || this;
+    _this.type = _types.ID;
+    return _this;
+  }
+
+  var _proto = ID.prototype;
+
+  _proto.toString = function toString() {
+    return [this.rawSpaceBefore, String('#' + this.stringifyProperty("value")), this.rawSpaceAfter].join('');
+  };
+
+  return ID;
+}(_node.default);
+
+exports.default = ID;
+module.exports = exports.default;
+},{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/namespace.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.default = void 0;
+
+var _cssesc = _interopRequireDefault(require("cssesc"));
+
+var _util = require("../util");
+
+var _node = _interopRequireDefault(require("./node"));
+
+function _interopRequireDefault(obj) {
+  return obj && obj.__esModule ? obj : {
+    default: obj
+  };
+}
+
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+var Namespace =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(Namespace, _Node);
 
   function Namespace() {
-    _classCallCheck(this, Namespace);
-
-    return _possibleConstructorReturn(this, _Node.apply(this, arguments));
+    return _Node.apply(this, arguments) || this;
   }
 
-  Namespace.prototype.qualifiedName = function qualifiedName(value) {
+  var _proto = Namespace.prototype;
+
+  _proto.qualifiedName = function qualifiedName(value) {
     if (this.namespace) {
-      return this.namespaceString + '|' + value;
+      return this.namespaceString + "|" + value;
     } else {
       return value;
     }
   };
 
-  Namespace.prototype.toString = function toString() {
-    return [this.spaces.before, this.qualifiedName(this.value), this.spaces.after].join('');
+  _proto.toString = function toString() {
+    return [this.rawSpaceBefore, this.qualifiedName(this.stringifyProperty("value")), this.rawSpaceAfter].join('');
   };
 
   _createClass(Namespace, [{
-    key: 'namespace',
+    key: "namespace",
     get: function get() {
       return this._namespace;
     },
     set: function set(namespace) {
+      if (namespace === true || namespace === "*" || namespace === "&") {
+        this._namespace = namespace;
+
+        if (this.raws) {
+          delete this.raws.namespace;
+        }
+
+        return;
+      }
+
+      var escaped = (0, _cssesc.default)(namespace, {
+        isIdentifier: true
+      });
       this._namespace = namespace;
 
-      if (this.raws) {
+      if (escaped !== namespace) {
+        (0, _util.ensureObject)(this, "raws");
+        this.raws.namespace = escaped;
+      } else if (this.raws) {
         delete this.raws.namespace;
       }
     }
   }, {
-    key: 'ns',
+    key: "ns",
     get: function get() {
       return this._namespace;
     },
     set: function set(namespace) {
-      this._namespace = namespace;
-
-      if (this.raws) {
-        delete this.raws.namespace;
-      }
+      this.namespace = namespace;
     }
   }, {
-    key: 'namespaceString',
+    key: "namespaceString",
     get: function get() {
       if (this.namespace) {
-        var ns = this.raws && this.raws.namespace || this.namespace;
+        var ns = this.stringifyProperty("namespace");
 
         if (ns === true) {
           return '';
@@ -1511,23 +1921,20 @@ var Namespace = function (_Node) {
   }]);
 
   return Namespace;
-}(_node2.default);
+}(_node.default);
 
 exports.default = Namespace;
 ;
-module.exports = exports['default'];
-},{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js"}],"../node_modules/postcss-selector-parser/dist/selectors/className.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+module.exports = exports.default;
+},{"cssesc":"../node_modules/cssesc/cssesc.js","../util":"../node_modules/postcss-selector-parser/dist/util/index.js","./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js"}],"../node_modules/postcss-selector-parser/dist/selectors/tag.js":[function(require,module,exports) {
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _namespace = require('./namespace');
+var _namespace = _interopRequireDefault(require("./namespace"));
 
-var _namespace2 = _interopRequireDefault(_namespace);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1535,271 +1942,39 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var ClassName = function (_Namespace) {
-  _inherits(ClassName, _Namespace);
-
-  function ClassName(opts) {
-    _classCallCheck(this, ClassName);
-
-    var _this = _possibleConstructorReturn(this, _Namespace.call(this, opts));
-
-    _this.type = _types.CLASS;
-    return _this;
-  }
-
-  ClassName.prototype.toString = function toString() {
-    return [this.spaces.before, this.ns, String('.' + this.value), this.spaces.after].join('');
-  };
-
-  return ClassName;
-}(_namespace2.default);
-
-exports.default = ClassName;
-module.exports = exports['default'];
-},{"./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/comment.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-exports.__esModule = true;
-
-var _node = require('./node');
-
-var _node2 = _interopRequireDefault(_node);
-
-var _types = require('./types');
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {
-    default: obj
-  };
-}
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Comment = function (_Node) {
-  _inherits(Comment, _Node);
-
-  function Comment(opts) {
-    _classCallCheck(this, Comment);
-
-    var _this = _possibleConstructorReturn(this, _Node.call(this, opts));
-
-    _this.type = _types.COMMENT;
-    return _this;
-  }
-
-  return Comment;
-}(_node2.default);
-
-exports.default = Comment;
-module.exports = exports['default'];
-},{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/id.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-exports.__esModule = true;
-
-var _namespace = require('./namespace');
-
-var _namespace2 = _interopRequireDefault(_namespace);
-
-var _types = require('./types');
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {
-    default: obj
-  };
-}
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var ID = function (_Namespace) {
-  _inherits(ID, _Namespace);
-
-  function ID(opts) {
-    _classCallCheck(this, ID);
-
-    var _this = _possibleConstructorReturn(this, _Namespace.call(this, opts));
-
-    _this.type = _types.ID;
-    return _this;
-  }
-
-  ID.prototype.toString = function toString() {
-    return [this.spaces.before, this.ns, String('#' + this.value), this.spaces.after].join('');
-  };
-
-  return ID;
-}(_namespace2.default);
-
-exports.default = ID;
-module.exports = exports['default'];
-},{"./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/tag.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-exports.__esModule = true;
-
-var _namespace = require('./namespace');
-
-var _namespace2 = _interopRequireDefault(_namespace);
-
-var _types = require('./types');
-
-function _interopRequireDefault(obj) {
-  return obj && obj.__esModule ? obj : {
-    default: obj
-  };
-}
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Tag = function (_Namespace) {
-  _inherits(Tag, _Namespace);
+var Tag =
+/*#__PURE__*/
+function (_Namespace) {
+  _inheritsLoose(Tag, _Namespace);
 
   function Tag(opts) {
-    _classCallCheck(this, Tag);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Namespace.call(this, opts));
-
+    _this = _Namespace.call(this, opts) || this;
     _this.type = _types.TAG;
     return _this;
   }
 
   return Tag;
-}(_namespace2.default);
+}(_namespace.default);
 
 exports.default = Tag;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/string.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _node = require('./node');
+var _node = _interopRequireDefault(require("./node"));
 
-var _node2 = _interopRequireDefault(_node);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1807,65 +1982,39 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var String = function (_Node) {
-  _inherits(String, _Node);
+var String =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(String, _Node);
 
   function String(opts) {
-    _classCallCheck(this, String);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Node.call(this, opts));
-
+    _this = _Node.call(this, opts) || this;
     _this.type = _types.STRING;
     return _this;
   }
 
   return String;
-}(_node2.default);
+}(_node.default);
 
 exports.default = String;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/pseudo.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _container = require('./container');
+var _container = _interopRequireDefault(require("./container"));
 
-var _container2 = _interopRequireDefault(_container);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1873,88 +2022,3054 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Pseudo = function (_Container) {
-  _inherits(Pseudo, _Container);
+var Pseudo =
+/*#__PURE__*/
+function (_Container) {
+  _inheritsLoose(Pseudo, _Container);
 
   function Pseudo(opts) {
-    _classCallCheck(this, Pseudo);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Container.call(this, opts));
-
+    _this = _Container.call(this, opts) || this;
     _this.type = _types.PSEUDO;
     return _this;
   }
 
-  Pseudo.prototype.toString = function toString() {
+  var _proto = Pseudo.prototype;
+
+  _proto.toString = function toString() {
     var params = this.length ? '(' + this.map(String).join(',') + ')' : '';
-    return [this.spaces.before, String(this.value), params, this.spaces.after].join('');
+    return [this.rawSpaceBefore, this.stringifyProperty("value"), params, this.rawSpaceAfter].join('');
   };
 
   return Pseudo;
-}(_container2.default);
+}(_container.default);
 
 exports.default = Pseudo;
-module.exports = exports['default'];
-},{"./container":"../node_modules/postcss-selector-parser/dist/selectors/container.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/attribute.js":[function(require,module,exports) {
-'use strict';
+module.exports = exports.default;
+},{"./container":"../node_modules/postcss-selector-parser/dist/selectors/container.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/base64-js/index.js":[function(require,module,exports) {
+'use strict'
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
 
-exports.__esModule = true;
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
 
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  for (var i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(
+      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+    ))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+},{}],"../node_modules/ieee754/index.js":[function(require,module,exports) {
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
     }
   }
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],"../node_modules/isarray/index.js":[function(require,module,exports) {
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+},{}],"../node_modules/buffer/index.js":[function(require,module,exports) {
+
+var global = arguments[3];
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+'use strict'
+
+var base64 = require('base64-js')
+var ieee754 = require('ieee754')
+var isArray = require('isarray')
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+},{"base64-js":"../node_modules/base64-js/index.js","ieee754":"../node_modules/ieee754/index.js","isarray":"../node_modules/isarray/index.js","buffer":"../node_modules/buffer/index.js"}],"../node_modules/util/support/isBuffer.js":[function(require,module,exports) {
+var Buffer = require("buffer").Buffer;
+module.exports = function isBuffer(arg) {
+  return arg instanceof Buffer;
+}
+
+},{"buffer":"../node_modules/buffer/index.js"}],"../node_modules/inherits/inherits_browser.js":[function(require,module,exports) {
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
   };
-}();
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
 
-var _namespace = require('./namespace');
+},{}],"../node_modules/process/browser.js":[function(require,module,exports) {
 
-var _namespace2 = _interopRequireDefault(_namespace);
+// shim for using process in browser
+var process = module.exports = {}; // cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
 
-var _types = require('./types');
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+  throw new Error('setTimeout has not been defined');
+}
+
+function defaultClearTimeout() {
+  throw new Error('clearTimeout has not been defined');
+}
+
+(function () {
+  try {
+    if (typeof setTimeout === 'function') {
+      cachedSetTimeout = setTimeout;
+    } else {
+      cachedSetTimeout = defaultSetTimout;
+    }
+  } catch (e) {
+    cachedSetTimeout = defaultSetTimout;
+  }
+
+  try {
+    if (typeof clearTimeout === 'function') {
+      cachedClearTimeout = clearTimeout;
+    } else {
+      cachedClearTimeout = defaultClearTimeout;
+    }
+  } catch (e) {
+    cachedClearTimeout = defaultClearTimeout;
+  }
+})();
+
+function runTimeout(fun) {
+  if (cachedSetTimeout === setTimeout) {
+    //normal enviroments in sane situations
+    return setTimeout(fun, 0);
+  } // if setTimeout wasn't available but was latter defined
+
+
+  if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+    cachedSetTimeout = setTimeout;
+    return setTimeout(fun, 0);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedSetTimeout(fun, 0);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+      return cachedSetTimeout.call(null, fun, 0);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+      return cachedSetTimeout.call(this, fun, 0);
+    }
+  }
+}
+
+function runClearTimeout(marker) {
+  if (cachedClearTimeout === clearTimeout) {
+    //normal enviroments in sane situations
+    return clearTimeout(marker);
+  } // if clearTimeout wasn't available but was latter defined
+
+
+  if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+    cachedClearTimeout = clearTimeout;
+    return clearTimeout(marker);
+  }
+
+  try {
+    // when when somebody has screwed with setTimeout but no I.E. maddness
+    return cachedClearTimeout(marker);
+  } catch (e) {
+    try {
+      // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+      return cachedClearTimeout.call(null, marker);
+    } catch (e) {
+      // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+      // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+      return cachedClearTimeout.call(this, marker);
+    }
+  }
+}
+
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+  if (!draining || !currentQueue) {
+    return;
+  }
+
+  draining = false;
+
+  if (currentQueue.length) {
+    queue = currentQueue.concat(queue);
+  } else {
+    queueIndex = -1;
+  }
+
+  if (queue.length) {
+    drainQueue();
+  }
+}
+
+function drainQueue() {
+  if (draining) {
+    return;
+  }
+
+  var timeout = runTimeout(cleanUpNextTick);
+  draining = true;
+  var len = queue.length;
+
+  while (len) {
+    currentQueue = queue;
+    queue = [];
+
+    while (++queueIndex < len) {
+      if (currentQueue) {
+        currentQueue[queueIndex].run();
+      }
+    }
+
+    queueIndex = -1;
+    len = queue.length;
+  }
+
+  currentQueue = null;
+  draining = false;
+  runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+  var args = new Array(arguments.length - 1);
+
+  if (arguments.length > 1) {
+    for (var i = 1; i < arguments.length; i++) {
+      args[i - 1] = arguments[i];
+    }
+  }
+
+  queue.push(new Item(fun, args));
+
+  if (queue.length === 1 && !draining) {
+    runTimeout(drainQueue);
+  }
+}; // v8 likes predictible objects
+
+
+function Item(fun, array) {
+  this.fun = fun;
+  this.array = array;
+}
+
+Item.prototype.run = function () {
+  this.fun.apply(null, this.array);
+};
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) {
+  return [];
+};
+
+process.binding = function (name) {
+  throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () {
+  return '/';
+};
+
+process.chdir = function (dir) {
+  throw new Error('process.chdir is not supported');
+};
+
+process.umask = function () {
+  return 0;
+};
+},{}],"../node_modules/util/util.js":[function(require,module,exports) {
+var process = require("process");
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+var getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors || function getOwnPropertyDescriptors(obj) {
+  var keys = Object.keys(obj);
+  var descriptors = {};
+
+  for (var i = 0; i < keys.length; i++) {
+    descriptors[keys[i]] = Object.getOwnPropertyDescriptor(obj, keys[i]);
+  }
+
+  return descriptors;
+};
+
+var formatRegExp = /%[sdj%]/g;
+
+exports.format = function (f) {
+  if (!isString(f)) {
+    var objects = [];
+
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function (x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+
+    switch (x) {
+      case '%s':
+        return String(args[i++]);
+
+      case '%d':
+        return Number(args[i++]);
+
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+
+      default:
+        return x;
+    }
+  });
+
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+
+  return str;
+}; // Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+
+
+exports.deprecate = function (fn, msg) {
+  if (typeof process !== 'undefined' && process.noDeprecation === true) {
+    return fn;
+  } // Allow for deprecating things in the process of starting up.
+
+
+  if (typeof process === 'undefined') {
+    return function () {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  var warned = false;
+
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+
+      warned = true;
+    }
+
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+var debugs = {};
+var debugEnviron;
+
+exports.debuglog = function (set) {
+  if (isUndefined(debugEnviron)) debugEnviron = undefined || '';
+  set = set.toUpperCase();
+
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+
+      debugs[set] = function () {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function () {};
+    }
+  }
+
+  return debugs[set];
+};
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+
+/* legacy: obj, showHidden, depth, colors*/
+
+
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  }; // legacy...
+
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  } // set default options
+
+
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+
+exports.inspect = inspect; // http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+
+inspect.colors = {
+  'bold': [1, 22],
+  'italic': [3, 23],
+  'underline': [4, 24],
+  'inverse': [7, 27],
+  'white': [37, 39],
+  'grey': [90, 39],
+  'black': [30, 39],
+  'blue': [34, 39],
+  'cyan': [36, 39],
+  'green': [32, 39],
+  'magenta': [35, 39],
+  'red': [31, 39],
+  'yellow': [33, 39]
+}; // Don't use 'blue' not visible on cmd.exe
+
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str + '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+function arrayToHash(array) {
+  var hash = {};
+  array.forEach(function (val, idx) {
+    hash[val] = true;
+  });
+  return hash;
+}
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect && value && isFunction(value.inspect) && // Filter out the util module, it's inspect function is special
+  value.inspect !== exports.inspect && // Also filter out any prototype objects using the circular check.
+  !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+
+    return ret;
+  } // Primitive types cannot have properties
+
+
+  var primitive = formatPrimitive(ctx, value);
+
+  if (primitive) {
+    return primitive;
+  } // Look up the keys of the object.
+
+
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  } // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+
+
+  if (isError(value) && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  } // Some type of object without properties can be shortcutted.
+
+
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '',
+      array = false,
+      braces = ['{', '}']; // Make Array say that they are Array
+
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  } // Make functions say that they are functions
+
+
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  } // Make RegExps say that they are RegExps
+
+
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  } // Make dates with properties first say the date
+
+
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  } // Make error with message first say the error
+
+
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+  var output;
+
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function (key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+  return reduceToSingleString(output, base, braces);
+}
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value)) return ctx.stylize('undefined', 'undefined');
+
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '').replace(/'/g, "\\'").replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+
+  if (isNumber(value)) return ctx.stylize('' + value, 'number');
+  if (isBoolean(value)) return ctx.stylize('' + value, 'boolean'); // For some reason typeof null is "object", so special case here.
+
+  if (isNull(value)) return ctx.stylize('null', 'null');
+}
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+
+  keys.forEach(function (key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys, key, true));
+    }
+  });
+  return output;
+}
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || {
+    value: value[key]
+  };
+
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function (line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function (line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+
+    name = JSON.stringify('' + key);
+
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'").replace(/\\"/g, '"').replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function (prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] + (base === '' ? '' : base + '\n ') + ' ' + output.join(',\n  ') + ' ' + braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+} // NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+
+
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) && (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null || typeof arg === 'boolean' || typeof arg === 'number' || typeof arg === 'string' || typeof arg === 'symbol' || // ES6 symbol
+  typeof arg === 'undefined';
+}
+
+exports.isPrimitive = isPrimitive;
+exports.isBuffer = require('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; // 26 Feb 16:19:34
+
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()), pad(d.getMinutes()), pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+} // log is just a thin wrapper to console.log that prepends a timestamp
+
+
+exports.log = function () {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+
+
+exports.inherits = require('inherits');
+
+exports._extend = function (origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+  var keys = Object.keys(add);
+  var i = keys.length;
+
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+var kCustomPromisifiedSymbol = typeof Symbol !== 'undefined' ? Symbol('util.promisify.custom') : undefined;
+
+exports.promisify = function promisify(original) {
+  if (typeof original !== 'function') throw new TypeError('The "original" argument must be of type Function');
+
+  if (kCustomPromisifiedSymbol && original[kCustomPromisifiedSymbol]) {
+    var fn = original[kCustomPromisifiedSymbol];
+
+    if (typeof fn !== 'function') {
+      throw new TypeError('The "util.promisify.custom" argument must be of type Function');
+    }
+
+    Object.defineProperty(fn, kCustomPromisifiedSymbol, {
+      value: fn,
+      enumerable: false,
+      writable: false,
+      configurable: true
+    });
+    return fn;
+  }
+
+  function fn() {
+    var promiseResolve, promiseReject;
+    var promise = new Promise(function (resolve, reject) {
+      promiseResolve = resolve;
+      promiseReject = reject;
+    });
+    var args = [];
+
+    for (var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
+    }
+
+    args.push(function (err, value) {
+      if (err) {
+        promiseReject(err);
+      } else {
+        promiseResolve(value);
+      }
+    });
+
+    try {
+      original.apply(this, args);
+    } catch (err) {
+      promiseReject(err);
+    }
+
+    return promise;
+  }
+
+  Object.setPrototypeOf(fn, Object.getPrototypeOf(original));
+  if (kCustomPromisifiedSymbol) Object.defineProperty(fn, kCustomPromisifiedSymbol, {
+    value: fn,
+    enumerable: false,
+    writable: false,
+    configurable: true
+  });
+  return Object.defineProperties(fn, getOwnPropertyDescriptors(original));
+};
+
+exports.promisify.custom = kCustomPromisifiedSymbol;
+
+function callbackifyOnRejected(reason, cb) {
+  // `!reason` guard inspired by bluebird (Ref: https://goo.gl/t5IS6M).
+  // Because `null` is a special error value in callbacks which means "no error
+  // occurred", we error-wrap so the callback consumer can distinguish between
+  // "the promise rejected with null" or "the promise fulfilled with undefined".
+  if (!reason) {
+    var newReason = new Error('Promise was rejected with a falsy value');
+    newReason.reason = reason;
+    reason = newReason;
+  }
+
+  return cb(reason);
+}
+
+function callbackify(original) {
+  if (typeof original !== 'function') {
+    throw new TypeError('The "original" argument must be of type Function');
+  } // We DO NOT return the promise as it gives the user a false sense that
+  // the promise is actually somehow related to the callback's execution
+  // and that the callback throwing will reject the promise.
+
+
+  function callbackified() {
+    var args = [];
+
+    for (var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
+    }
+
+    var maybeCb = args.pop();
+
+    if (typeof maybeCb !== 'function') {
+      throw new TypeError('The last argument must be of type Function');
+    }
+
+    var self = this;
+
+    var cb = function () {
+      return maybeCb.apply(self, arguments);
+    }; // In true node style we process the callback on `nextTick` with all the
+    // implications (stack, `uncaughtException`, `async_hooks`)
+
+
+    original.apply(this, args).then(function (ret) {
+      process.nextTick(cb, null, ret);
+    }, function (rej) {
+      process.nextTick(callbackifyOnRejected, rej, cb);
+    });
+  }
+
+  Object.setPrototypeOf(callbackified, Object.getPrototypeOf(original));
+  Object.defineProperties(callbackified, getOwnPropertyDescriptors(original));
+  return callbackified;
+}
+
+exports.callbackify = callbackify;
+},{"./support/isBuffer":"../node_modules/util/support/isBuffer.js","inherits":"../node_modules/inherits/inherits_browser.js","process":"../node_modules/process/browser.js"}],"../node_modules/postcss-selector-parser/dist/selectors/attribute.js":[function(require,module,exports) {
+"use strict";
+
+exports.__esModule = true;
+exports.unescapeValue = unescapeValue;
+exports.default = void 0;
+
+var _cssesc = _interopRequireDefault(require("cssesc"));
+
+var _unesc = _interopRequireDefault(require("../util/unesc"));
+
+var _namespace = _interopRequireDefault(require("./namespace"));
+
+var _types = require("./types");
+
+var _CSSESC_QUOTE_OPTIONS;
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -1962,53 +5077,269 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
 }
 
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
+}
+
+var _require = require("util"),
+    deprecate = _require.deprecate;
+
+var WRAPPED_IN_QUOTES = /^('|")(.*)\1$/;
+var warnOfDeprecatedValueAssignment = deprecate(function () {}, "Assigning an attribute a value containing characters that might need to be escaped is deprecated. " + "Call attribute.setValue() instead.");
+var warnOfDeprecatedQuotedAssignment = deprecate(function () {}, "Assigning attr.quoted is deprecated and has no effect. Assign to attr.quoteMark instead.");
+var warnOfDeprecatedConstructor = deprecate(function () {}, "Constructing an Attribute selector with a value without specifying quoteMark is deprecated. Note: The value should be unescaped now.");
+
+function unescapeValue(value) {
+  var deprecatedUsage = false;
+  var quoteMark = null;
+  var unescaped = value;
+  var m = unescaped.match(WRAPPED_IN_QUOTES);
+
+  if (m) {
+    quoteMark = m[1];
+    unescaped = m[2];
   }
 
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
+  unescaped = (0, _unesc.default)(unescaped);
+
+  if (unescaped !== value) {
+    deprecatedUsage = true;
+  }
+
+  return {
+    deprecatedUsage: deprecatedUsage,
+    unescaped: unescaped,
+    quoteMark: quoteMark
+  };
+}
+
+function handleDeprecatedContructorOpts(opts) {
+  if (opts.quoteMark !== undefined) {
+    return opts;
+  }
+
+  if (opts.value === undefined) {
+    return opts;
+  }
+
+  warnOfDeprecatedConstructor();
+
+  var _unescapeValue = unescapeValue(opts.value),
+      quoteMark = _unescapeValue.quoteMark,
+      unescaped = _unescapeValue.unescaped;
+
+  if (!opts.raws) {
+    opts.raws = {};
+  }
+
+  if (opts.raws.value === undefined) {
+    opts.raws.value = opts.value;
+  }
+
+  opts.value = unescaped;
+  opts.quoteMark = quoteMark;
+  return opts;
+}
+
+var Attribute =
+/*#__PURE__*/
+function (_Namespace) {
+  _inheritsLoose(Attribute, _Namespace);
+
+  function Attribute(opts) {
+    var _this;
+
+    if (opts === void 0) {
+      opts = {};
     }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
 
-var Attribute = function (_Namespace) {
-  _inherits(Attribute, _Namespace);
-
-  function Attribute() {
-    var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-    _classCallCheck(this, Attribute);
-
-    var _this = _possibleConstructorReturn(this, _Namespace.call(this, opts));
-
+    _this = _Namespace.call(this, handleDeprecatedContructorOpts(opts)) || this;
     _this.type = _types.ATTRIBUTE;
     _this.raws = _this.raws || {};
+    Object.defineProperty(_this.raws, 'unquoted', {
+      get: deprecate(function () {
+        return _this.value;
+      }, "attr.raws.unquoted is deprecated. Call attr.value instead."),
+      set: deprecate(function () {
+        return _this.value;
+      }, "Setting attr.raws.unquoted is deprecated and has no effect. attr.value is unescaped by default now.")
+    });
     _this._constructed = true;
     return _this;
   }
+  /**
+   * Returns the Attribute's value quoted such that it would be legal to use
+   * in the value of a css file. The original value's quotation setting
+   * used for stringification is left unchanged. See `setValue(value, options)`
+   * if you want to control the quote settings of a new value for the attribute.
+   *
+   * You can also change the quotation used for the current value by setting quoteMark.
+   *
+   * Options:
+   *   * quoteMark {'"' | "'" | null} - Use this value to quote the value. If this
+   *     option is not set, the original value for quoteMark will be used. If
+   *     indeterminate, a double quote is used. The legal values are:
+   *     * `null` - the value will be unquoted and characters will be escaped as necessary.
+   *     * `'` - the value will be quoted with a single quote and single quotes are escaped.
+   *     * `"` - the value will be quoted with a double quote and double quotes are escaped.
+   *   * preferCurrentQuoteMark {boolean} - if true, prefer the source quote mark
+   *     over the quoteMark option value.
+   *   * smart {boolean} - if true, will select a quote mark based on the value
+   *     and the other options specified here. See the `smartQuoteMark()`
+   *     method.
+   **/
 
-  Attribute.prototype._spacesFor = function _spacesFor(name) {
+
+  var _proto = Attribute.prototype;
+
+  _proto.getQuotedValue = function getQuotedValue(options) {
+    if (options === void 0) {
+      options = {};
+    }
+
+    var quoteMark = this._determineQuoteMark(options);
+
+    var cssescopts = CSSESC_QUOTE_OPTIONS[quoteMark];
+    var escaped = (0, _cssesc.default)(this._value, cssescopts);
+    return escaped;
+  };
+
+  _proto._determineQuoteMark = function _determineQuoteMark(options) {
+    return options.smart ? this.smartQuoteMark(options) : this.preferredQuoteMark(options);
+  }
+  /**
+   * Set the unescaped value with the specified quotation options. The value
+   * provided must not include any wrapping quote marks -- those quotes will
+   * be interpreted as part of the value and escaped accordingly.
+   */
+  ;
+
+  _proto.setValue = function setValue(value, options) {
+    if (options === void 0) {
+      options = {};
+    }
+
+    this._value = value;
+    this._quoteMark = this._determineQuoteMark(options);
+
+    this._syncRawValue();
+  }
+  /**
+   * Intelligently select a quoteMark value based on the value's contents. If
+   * the value is a legal CSS ident, it will not be quoted. Otherwise a quote
+   * mark will be picked that minimizes the number of escapes.
+   *
+   * If there's no clear winner, the quote mark from these options is used,
+   * then the source quote mark (this is inverted if `preferCurrentQuoteMark` is
+   * true). If the quoteMark is unspecified, a double quote is used.
+   *
+   * @param options This takes the quoteMark and preferCurrentQuoteMark options
+   * from the quoteValue method.
+   */
+  ;
+
+  _proto.smartQuoteMark = function smartQuoteMark(options) {
+    var v = this.value;
+    var numSingleQuotes = v.replace(/[^']/g, '').length;
+    var numDoubleQuotes = v.replace(/[^"]/g, '').length;
+
+    if (numSingleQuotes + numDoubleQuotes === 0) {
+      var escaped = (0, _cssesc.default)(v, {
+        isIdentifier: true
+      });
+
+      if (escaped === v) {
+        return Attribute.NO_QUOTE;
+      } else {
+        var pref = this.preferredQuoteMark(options);
+
+        if (pref === Attribute.NO_QUOTE) {
+          // pick a quote mark that isn't none and see if it's smaller
+          var quote = this.quoteMark || options.quoteMark || Attribute.DOUBLE_QUOTE;
+          var opts = CSSESC_QUOTE_OPTIONS[quote];
+          var quoteValue = (0, _cssesc.default)(v, opts);
+
+          if (quoteValue.length < escaped.length) {
+            return quote;
+          }
+        }
+
+        return pref;
+      }
+    } else if (numDoubleQuotes === numSingleQuotes) {
+      return this.preferredQuoteMark(options);
+    } else if (numDoubleQuotes < numSingleQuotes) {
+      return Attribute.DOUBLE_QUOTE;
+    } else {
+      return Attribute.SINGLE_QUOTE;
+    }
+  }
+  /**
+   * Selects the preferred quote mark based on the options and the current quote mark value.
+   * If you want the quote mark to depend on the attribute value, call `smartQuoteMark(opts)`
+   * instead.
+   */
+  ;
+
+  _proto.preferredQuoteMark = function preferredQuoteMark(options) {
+    var quoteMark = options.preferCurrentQuoteMark ? this.quoteMark : options.quoteMark;
+
+    if (quoteMark === undefined) {
+      quoteMark = options.preferCurrentQuoteMark ? options.quoteMark : this.quoteMark;
+    }
+
+    if (quoteMark === undefined) {
+      quoteMark = Attribute.DOUBLE_QUOTE;
+    }
+
+    return quoteMark;
+  };
+
+  _proto._syncRawValue = function _syncRawValue() {
+    var rawValue = (0, _cssesc.default)(this._value, CSSESC_QUOTE_OPTIONS[this.quoteMark]);
+
+    if (rawValue === this._value) {
+      if (this.raws) {
+        delete this.raws.value;
+      }
+    } else {
+      this.raws.value = rawValue;
+    }
+  };
+
+  _proto._handleEscapes = function _handleEscapes(prop, value) {
+    if (this._constructed) {
+      var escaped = (0, _cssesc.default)(value, {
+        isIdentifier: true
+      });
+
+      if (escaped !== value) {
+        this.raws[prop] = escaped;
+      } else {
+        delete this.raws[prop];
+      }
+    }
+  };
+
+  _proto._spacesFor = function _spacesFor(name) {
     var attrSpaces = {
       before: '',
       after: ''
@@ -2018,18 +5349,19 @@ var Attribute = function (_Namespace) {
     return Object.assign(attrSpaces, spaces, rawSpaces);
   };
 
-  Attribute.prototype._valueFor = function _valueFor(name) {
-    return this.raws[name] || this[name];
-  };
+  _proto._stringFor = function _stringFor(name, spaceName, concat) {
+    if (spaceName === void 0) {
+      spaceName = name;
+    }
 
-  Attribute.prototype._stringFor = function _stringFor(name) {
-    var spaceName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : name;
-    var concat = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultAttrConcat;
+    if (concat === void 0) {
+      concat = defaultAttrConcat;
+    }
 
     var attrSpaces = this._spacesFor(spaceName);
 
-    return concat(this._valueFor(name), attrSpaces);
-  };
+    return concat(this.stringifyProperty(name), attrSpaces);
+  }
   /**
    * returns the offset of the attribute part specified relative to the
    * start of the node of the output string.
@@ -2044,9 +5376,9 @@ var Attribute = function (_Namespace) {
    * @param part One of the possible values inside an attribute.
    * @returns -1 if the name is invalid or the value doesn't exist in this attribute.
    */
+  ;
 
-
-  Attribute.prototype.offsetOf = function offsetOf(name) {
+  _proto.offsetOf = function offsetOf(name) {
     var count = 1;
 
     var attributeSpaces = this._spacesFor("attribute");
@@ -2071,14 +5403,13 @@ var Attribute = function (_Namespace) {
       return count;
     }
 
-    count += this._valueFor("attribute").length;
+    count += this.stringifyProperty("attribute").length;
     count += attributeSpaces.after.length;
 
     var operatorSpaces = this._spacesFor("operator");
 
     count += operatorSpaces.before.length;
-
-    var operator = this._valueFor("operator");
+    var operator = this.stringifyProperty("operator");
 
     if (name === "operator") {
       return operator ? count : -1;
@@ -2090,8 +5421,7 @@ var Attribute = function (_Namespace) {
     var valueSpaces = this._spacesFor("value");
 
     count += valueSpaces.before.length;
-
-    var value = this._valueFor("value");
+    var value = this.stringifyProperty("value");
 
     if (name === "value") {
       return value ? count : -1;
@@ -2111,13 +5441,13 @@ var Attribute = function (_Namespace) {
     return -1;
   };
 
-  Attribute.prototype.toString = function toString() {
+  _proto.toString = function toString() {
     var _this2 = this;
 
-    var selector = [this.spaces.before, '['];
+    var selector = [this.rawSpaceBefore, '['];
     selector.push(this._stringFor('qualifiedAttribute', 'attribute'));
 
-    if (this.operator && this.value) {
+    if (this.operator && (this.value || this.value === '')) {
       selector.push(this._stringFor('operator'));
       selector.push(this._stringFor('value'));
       selector.push(this._stringFor('insensitiveFlag', 'insensitive', function (attrValue, attrSpaces) {
@@ -2130,80 +5460,146 @@ var Attribute = function (_Namespace) {
     }
 
     selector.push(']');
-    selector.push(this.spaces.after);
+    selector.push(this.rawSpaceAfter);
     return selector.join('');
   };
 
   _createClass(Attribute, [{
-    key: 'qualifiedAttribute',
+    key: "quoted",
+    get: function get() {
+      var qm = this.quoteMark;
+      return qm === "'" || qm === '"';
+    },
+    set: function set(value) {
+      warnOfDeprecatedQuotedAssignment();
+    }
+    /**
+     * returns a single (`'`) or double (`"`) quote character if the value is quoted.
+     * returns `null` if the value is not quoted.
+     * returns `undefined` if the quotation state is unknown (this can happen when
+     * the attribute is constructed without specifying a quote mark.)
+     */
+
+  }, {
+    key: "quoteMark",
+    get: function get() {
+      return this._quoteMark;
+    }
+    /**
+     * Set the quote mark to be used by this attribute's value.
+     * If the quote mark changes, the raw (escaped) value at `attr.raws.value` of the attribute
+     * value is updated accordingly.
+     *
+     * @param {"'" | '"' | null} quoteMark The quote mark or `null` if the value should be unquoted.
+     */
+    ,
+    set: function set(quoteMark) {
+      if (!this._constructed) {
+        this._quoteMark = quoteMark;
+        return;
+      }
+
+      if (this._quoteMark !== quoteMark) {
+        this._quoteMark = quoteMark;
+
+        this._syncRawValue();
+      }
+    }
+  }, {
+    key: "qualifiedAttribute",
     get: function get() {
       return this.qualifiedName(this.raws.attribute || this.attribute);
     }
   }, {
-    key: 'insensitiveFlag',
+    key: "insensitiveFlag",
     get: function get() {
       return this.insensitive ? 'i' : '';
     }
   }, {
-    key: 'value',
+    key: "value",
     get: function get() {
       return this._value;
-    },
+    }
+    /**
+     * Before 3.0, the value had to be set to an escaped value including any wrapped
+     * quote marks. In 3.0, the semantics of `Attribute.value` changed so that the value
+     * is unescaped during parsing and any quote marks are removed.
+     *
+     * Because the ambiguity of this semantic change, if you set `attr.value = newValue`,
+     * a deprecation warning is raised when the new value contains any characters that would
+     * require escaping (including if it contains wrapped quotes).
+     *
+     * Instead, you should call `attr.setValue(newValue, opts)` and pass options that describe
+     * how the new value is quoted.
+     */
+    ,
     set: function set(v) {
-      this._value = v;
-
       if (this._constructed) {
-        delete this.raws.value;
+        var _unescapeValue2 = unescapeValue(v),
+            deprecatedUsage = _unescapeValue2.deprecatedUsage,
+            unescaped = _unescapeValue2.unescaped,
+            quoteMark = _unescapeValue2.quoteMark;
+
+        if (deprecatedUsage) {
+          warnOfDeprecatedValueAssignment();
+        }
+
+        if (unescaped === this._value && quoteMark === this._quoteMark) {
+          return;
+        }
+
+        this._value = unescaped;
+        this._quoteMark = quoteMark;
+
+        this._syncRawValue();
+      } else {
+        this._value = v;
       }
     }
   }, {
-    key: 'namespace',
-    get: function get() {
-      return this._namespace;
-    },
-    set: function set(v) {
-      this._namespace = v;
-
-      if (this._constructed) {
-        delete this.raws.namespace;
-      }
-    }
-  }, {
-    key: 'attribute',
+    key: "attribute",
     get: function get() {
       return this._attribute;
     },
-    set: function set(v) {
-      this._attribute = v;
+    set: function set(name) {
+      this._handleEscapes("attribute", name);
 
-      if (this._constructed) {
-        delete this.raws.attibute;
-      }
+      this._attribute = name;
     }
   }]);
 
   return Attribute;
-}(_namespace2.default);
+}(_namespace.default);
 
 exports.default = Attribute;
+Attribute.NO_QUOTE = null;
+Attribute.SINGLE_QUOTE = "'";
+Attribute.DOUBLE_QUOTE = '"';
+var CSSESC_QUOTE_OPTIONS = (_CSSESC_QUOTE_OPTIONS = {
+  "'": {
+    quotes: 'single',
+    wrap: true
+  },
+  '"': {
+    quotes: 'double',
+    wrap: true
+  }
+}, _CSSESC_QUOTE_OPTIONS[null] = {
+  isIdentifier: true
+}, _CSSESC_QUOTE_OPTIONS);
 
 function defaultAttrConcat(attrValue, attrSpaces) {
-  return '' + attrSpaces.before + attrValue + attrSpaces.after;
+  return "" + attrSpaces.before + attrValue + attrSpaces.after;
 }
-
-module.exports = exports['default'];
-},{"./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/universal.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+},{"cssesc":"../node_modules/cssesc/cssesc.js","../util/unesc":"../node_modules/postcss-selector-parser/dist/util/unesc.js","./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js","util":"../node_modules/util/util.js"}],"../node_modules/postcss-selector-parser/dist/selectors/universal.js":[function(require,module,exports) {
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _namespace = require('./namespace');
+var _namespace = _interopRequireDefault(require("./namespace"));
 
-var _namespace2 = _interopRequireDefault(_namespace);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -2211,66 +5607,40 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Universal = function (_Namespace) {
-  _inherits(Universal, _Namespace);
+var Universal =
+/*#__PURE__*/
+function (_Namespace) {
+  _inheritsLoose(Universal, _Namespace);
 
   function Universal(opts) {
-    _classCallCheck(this, Universal);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Namespace.call(this, opts));
-
+    _this = _Namespace.call(this, opts) || this;
     _this.type = _types.UNIVERSAL;
     _this.value = '*';
     return _this;
   }
 
   return Universal;
-}(_namespace2.default);
+}(_namespace.default);
 
 exports.default = Universal;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./namespace":"../node_modules/postcss-selector-parser/dist/selectors/namespace.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/combinator.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _node = require('./node');
+var _node = _interopRequireDefault(require("./node"));
 
-var _node2 = _interopRequireDefault(_node);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -2278,65 +5648,39 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Combinator = function (_Node) {
-  _inherits(Combinator, _Node);
+var Combinator =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(Combinator, _Node);
 
   function Combinator(opts) {
-    _classCallCheck(this, Combinator);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Node.call(this, opts));
-
+    _this = _Node.call(this, opts) || this;
     _this.type = _types.COMBINATOR;
     return _this;
   }
 
   return Combinator;
-}(_node2.default);
+}(_node.default);
 
 exports.default = Combinator;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/nesting.js":[function(require,module,exports) {
-'use strict';
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _node = require('./node');
+var _node = _interopRequireDefault(require("./node"));
 
-var _node2 = _interopRequireDefault(_node);
-
-var _types = require('./types');
+var _types = require("./types");
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -2344,54 +5688,31 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
+function _inheritsLoose(subClass, superClass) {
+  subClass.prototype = Object.create(superClass.prototype);
+  subClass.prototype.constructor = subClass;
+  subClass.__proto__ = superClass;
 }
 
-function _possibleConstructorReturn(self, call) {
-  if (!self) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return call && (_typeof(call) === "object" || typeof call === "function") ? call : self;
-}
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function, not " + _typeof(superClass));
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
-}
-
-var Nesting = function (_Node) {
-  _inherits(Nesting, _Node);
+var Nesting =
+/*#__PURE__*/
+function (_Node) {
+  _inheritsLoose(Nesting, _Node);
 
   function Nesting(opts) {
-    _classCallCheck(this, Nesting);
+    var _this;
 
-    var _this = _possibleConstructorReturn(this, _Node.call(this, opts));
-
+    _this = _Node.call(this, opts) || this;
     _this.type = _types.NESTING;
     _this.value = '&';
     return _this;
   }
 
   return Nesting;
-}(_node2.default);
+}(_node.default);
 
 exports.default = Nesting;
-module.exports = exports['default'];
+module.exports = exports.default;
 },{"./node":"../node_modules/postcss-selector-parser/dist/selectors/node.js","./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/sortAscending.js":[function(require,module,exports) {
 "use strict";
 
@@ -2405,52 +5726,113 @@ function sortAscending(list) {
 }
 
 ;
-module.exports = exports["default"];
+module.exports = exports.default;
 },{}],"../node_modules/postcss-selector-parser/dist/tokenTypes.js":[function(require,module,exports) {
-'use strict';
+"use strict";
 
 exports.__esModule = true;
-var ampersand = exports.ampersand = '&'.charCodeAt(0);
-var asterisk = exports.asterisk = '*'.charCodeAt(0);
-var at = exports.at = '@'.charCodeAt(0);
-var comma = exports.comma = ','.charCodeAt(0);
-var colon = exports.colon = ':'.charCodeAt(0);
-var semicolon = exports.semicolon = ';'.charCodeAt(0);
-var openParenthesis = exports.openParenthesis = '('.charCodeAt(0);
-var closeParenthesis = exports.closeParenthesis = ')'.charCodeAt(0);
-var openSquare = exports.openSquare = '['.charCodeAt(0);
-var closeSquare = exports.closeSquare = ']'.charCodeAt(0);
-var dollar = exports.dollar = '$'.charCodeAt(0);
-var tilde = exports.tilde = '~'.charCodeAt(0);
-var caret = exports.caret = '^'.charCodeAt(0);
-var plus = exports.plus = '+'.charCodeAt(0);
-var equals = exports.equals = '='.charCodeAt(0);
-var pipe = exports.pipe = '|'.charCodeAt(0);
-var greaterThan = exports.greaterThan = '>'.charCodeAt(0);
-var space = exports.space = ' '.charCodeAt(0);
-var singleQuote = exports.singleQuote = '\''.charCodeAt(0);
-var doubleQuote = exports.doubleQuote = '"'.charCodeAt(0);
-var slash = exports.slash = '/'.charCodeAt(0);
-var backslash = exports.backslash = 92;
-var cr = exports.cr = 13;
-var feed = exports.feed = 12;
-var newline = exports.newline = 10;
-var tab = exports.tab = 9; // Expose aliases primarily for readability.
+exports.combinator = exports.word = exports.comment = exports.str = exports.tab = exports.newline = exports.feed = exports.cr = exports.backslash = exports.bang = exports.slash = exports.doubleQuote = exports.singleQuote = exports.space = exports.greaterThan = exports.pipe = exports.equals = exports.plus = exports.caret = exports.tilde = exports.dollar = exports.closeSquare = exports.openSquare = exports.closeParenthesis = exports.openParenthesis = exports.semicolon = exports.colon = exports.comma = exports.at = exports.asterisk = exports.ampersand = void 0;
+var ampersand = 38; // `&`.charCodeAt(0);
 
-var str = exports.str = singleQuote; // No good single character representation!
+exports.ampersand = ampersand;
+var asterisk = 42; // `*`.charCodeAt(0);
 
-var comment = exports.comment = -1;
-var word = exports.word = -2;
-var combinator = exports.combinator = -3;
+exports.asterisk = asterisk;
+var at = 64; // `@`.charCodeAt(0);
+
+exports.at = at;
+var comma = 44; // `,`.charCodeAt(0);
+
+exports.comma = comma;
+var colon = 58; // `:`.charCodeAt(0);
+
+exports.colon = colon;
+var semicolon = 59; // `;`.charCodeAt(0);
+
+exports.semicolon = semicolon;
+var openParenthesis = 40; // `(`.charCodeAt(0);
+
+exports.openParenthesis = openParenthesis;
+var closeParenthesis = 41; // `)`.charCodeAt(0);
+
+exports.closeParenthesis = closeParenthesis;
+var openSquare = 91; // `[`.charCodeAt(0);
+
+exports.openSquare = openSquare;
+var closeSquare = 93; // `]`.charCodeAt(0);
+
+exports.closeSquare = closeSquare;
+var dollar = 36; // `$`.charCodeAt(0);
+
+exports.dollar = dollar;
+var tilde = 126; // `~`.charCodeAt(0);
+
+exports.tilde = tilde;
+var caret = 94; // `^`.charCodeAt(0);
+
+exports.caret = caret;
+var plus = 43; // `+`.charCodeAt(0);
+
+exports.plus = plus;
+var equals = 61; // `=`.charCodeAt(0);
+
+exports.equals = equals;
+var pipe = 124; // `|`.charCodeAt(0);
+
+exports.pipe = pipe;
+var greaterThan = 62; // `>`.charCodeAt(0);
+
+exports.greaterThan = greaterThan;
+var space = 32; // ` `.charCodeAt(0);
+
+exports.space = space;
+var singleQuote = 39; // `'`.charCodeAt(0);
+
+exports.singleQuote = singleQuote;
+var doubleQuote = 34; // `"`.charCodeAt(0);
+
+exports.doubleQuote = doubleQuote;
+var slash = 47; // `/`.charCodeAt(0);
+
+exports.slash = slash;
+var bang = 33; // `!`.charCodeAt(0);
+
+exports.bang = bang;
+var backslash = 92; // '\\'.charCodeAt(0);
+
+exports.backslash = backslash;
+var cr = 13; // '\r'.charCodeAt(0);
+
+exports.cr = cr;
+var feed = 12; // '\f'.charCodeAt(0);
+
+exports.feed = feed;
+var newline = 10; // '\n'.charCodeAt(0);
+
+exports.newline = newline;
+var tab = 9; // '\t'.charCodeAt(0);
+// Expose aliases primarily for readability.
+
+exports.tab = tab;
+var str = singleQuote; // No good single character representation!
+
+exports.str = str;
+var comment = -1;
+exports.comment = comment;
+var word = -2;
+exports.word = word;
+var combinator = -3;
+exports.combinator = combinator;
 },{}],"../node_modules/postcss-selector-parser/dist/tokenize.js":[function(require,module,exports) {
-'use strict';
+"use strict";
 
 exports.__esModule = true;
 exports.default = tokenize;
+exports.FIELDS = void 0;
 
-var _tokenTypes = require('./tokenTypes');
+var t = _interopRequireWildcard(require("./tokenTypes"));
 
-var t = _interopRequireWildcard(_tokenTypes);
+var _unescapable, _wordDelimiters;
 
 function _interopRequireWildcard(obj) {
   if (obj && obj.__esModule) {
@@ -2460,7 +5842,15 @@ function _interopRequireWildcard(obj) {
 
     if (obj != null) {
       for (var key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {};
+
+          if (desc.get || desc.set) {
+            Object.defineProperty(newObj, key, desc);
+          } else {
+            newObj[key] = obj[key];
+          }
+        }
       }
     }
 
@@ -2469,7 +5859,83 @@ function _interopRequireWildcard(obj) {
   }
 }
 
-var wordEnd = /[ \n\t\r\(\)\*:;!&'"\+\|~>,=$^\[\]\\]|\/(?=\*)/g;
+var unescapable = (_unescapable = {}, _unescapable[t.tab] = true, _unescapable[t.newline] = true, _unescapable[t.cr] = true, _unescapable[t.feed] = true, _unescapable);
+var wordDelimiters = (_wordDelimiters = {}, _wordDelimiters[t.space] = true, _wordDelimiters[t.tab] = true, _wordDelimiters[t.newline] = true, _wordDelimiters[t.cr] = true, _wordDelimiters[t.feed] = true, _wordDelimiters[t.ampersand] = true, _wordDelimiters[t.asterisk] = true, _wordDelimiters[t.bang] = true, _wordDelimiters[t.comma] = true, _wordDelimiters[t.colon] = true, _wordDelimiters[t.semicolon] = true, _wordDelimiters[t.openParenthesis] = true, _wordDelimiters[t.closeParenthesis] = true, _wordDelimiters[t.openSquare] = true, _wordDelimiters[t.closeSquare] = true, _wordDelimiters[t.singleQuote] = true, _wordDelimiters[t.doubleQuote] = true, _wordDelimiters[t.plus] = true, _wordDelimiters[t.pipe] = true, _wordDelimiters[t.tilde] = true, _wordDelimiters[t.greaterThan] = true, _wordDelimiters[t.equals] = true, _wordDelimiters[t.dollar] = true, _wordDelimiters[t.caret] = true, _wordDelimiters[t.slash] = true, _wordDelimiters);
+var hex = {};
+var hexChars = "0123456789abcdefABCDEF";
+
+for (var i = 0; i < hexChars.length; i++) {
+  hex[hexChars.charCodeAt(i)] = true;
+}
+/**
+ *  Returns the last index of the bar css word
+ * @param {string} css The string in which the word begins
+ * @param {number} start The index into the string where word's first letter occurs
+ */
+
+
+function consumeWord(css, start) {
+  var next = start;
+  var code;
+
+  do {
+    code = css.charCodeAt(next);
+
+    if (wordDelimiters[code]) {
+      return next - 1;
+    } else if (code === t.backslash) {
+      next = consumeEscape(css, next) + 1;
+    } else {
+      // All other characters are part of the word
+      next++;
+    }
+  } while (next < css.length);
+
+  return next - 1;
+}
+/**
+ *  Returns the last index of the escape sequence
+ * @param {string} css The string in which the sequence begins
+ * @param {number} start The index into the string where escape character (`\`) occurs.
+ */
+
+
+function consumeEscape(css, start) {
+  var next = start;
+  var code = css.charCodeAt(next + 1);
+
+  if (unescapable[code]) {// just consume the escape char
+  } else if (hex[code]) {
+    var hexDigits = 0; // consume up to 6 hex chars
+
+    do {
+      next++;
+      hexDigits++;
+      code = css.charCodeAt(next + 1);
+    } while (hex[code] && hexDigits < 6); // if fewer than 6 hex chars, a trailing space ends the escape
+
+
+    if (hexDigits < 6 && code === t.space) {
+      next++;
+    }
+  } else {
+    // the next char is part of the current word
+    next++;
+  }
+
+  return next;
+}
+
+var FIELDS = {
+  TYPE: 0,
+  START_LINE: 1,
+  START_COL: 2,
+  END_LINE: 3,
+  END_COL: 4,
+  START_POS: 5,
+  END_POS: 6
+};
+exports.FIELDS = FIELDS;
 
 function tokenize(input) {
   var tokens = [];
@@ -2480,19 +5946,7 @@ function tokenize(input) {
   var line = 1;
   var start = 0;
   var end = 0;
-  var code = void 0,
-      content = void 0,
-      endColumn = void 0,
-      endLine = void 0,
-      escaped = void 0,
-      escapePos = void 0,
-      last = void 0,
-      lines = void 0,
-      next = void 0,
-      nextLine = void 0,
-      nextOffset = void 0,
-      quote = void 0,
-      tokenType = void 0;
+  var code, content, endColumn, endLine, escaped, escapePos, last, lines, next, nextLine, nextOffset, quote, tokenType;
 
   function unclosed(what, fix) {
     if (input.safe) {
@@ -2513,9 +5967,9 @@ function tokenize(input) {
     }
 
     switch (code) {
-      case t.newline:
       case t.space:
       case t.tab:
+      case t.newline:
       case t.cr:
       case t.feed:
         next = start;
@@ -2532,7 +5986,7 @@ function tokenize(input) {
 
         tokenType = t.space;
         endLine = line;
-        endColumn = start - offset;
+        endColumn = next - offset - 1;
         end = next;
         break;
 
@@ -2556,6 +6010,7 @@ function tokenize(input) {
 
       case t.asterisk:
       case t.ampersand:
+      case t.bang:
       case t.comma:
       case t.equals:
       case t.dollar:
@@ -2600,27 +6055,6 @@ function tokenize(input) {
         end = next + 1;
         break;
 
-      case t.backslash:
-        next = start;
-        escaped = true;
-
-        while (css.charCodeAt(next + 1) === t.backslash) {
-          next += 1;
-          escaped = !escaped;
-        }
-
-        code = css.charCodeAt(next + 1);
-
-        if (escaped && code !== t.slash && code !== t.space && code !== t.newline && code !== t.tab && code !== t.cr && code !== t.feed) {
-          next += 1;
-        }
-
-        tokenType = t.word;
-        endLine = line;
-        endColumn = next - offset;
-        end = next + 1;
-        break;
-
       default:
         if (code === t.slash && css.charCodeAt(start + 1) === t.asterisk) {
           next = css.indexOf('*/', start + 2) + 1;
@@ -2645,16 +6079,14 @@ function tokenize(input) {
           line = nextLine;
           endLine = nextLine;
           endColumn = next - nextOffset;
+        } else if (code === t.slash) {
+          next = start;
+          tokenType = code;
+          endLine = line;
+          endColumn = start - offset;
+          end = next + 1;
         } else {
-          wordEnd.lastIndex = start + 1;
-          wordEnd.test(css);
-
-          if (wordEnd.lastIndex === 0) {
-            next = css.length - 1;
-          } else {
-            next = wordEnd.lastIndex - 2;
-          }
-
+          next = consumeWord(css, start);
           tokenType = t.word;
           endLine = line;
           endColumn = next - offset;
@@ -2683,106 +6115,51 @@ function tokenize(input) {
 
   return tokens;
 }
-
-module.exports = exports['default'];
 },{"./tokenTypes":"../node_modules/postcss-selector-parser/dist/tokenTypes.js"}],"../node_modules/postcss-selector-parser/dist/parser.js":[function(require,module,exports) {
-'use strict';
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
+var _indexesOf = _interopRequireDefault(require("indexes-of"));
 
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
+var _uniq = _interopRequireDefault(require("uniq"));
 
-var _dotProp = require('dot-prop');
+var _root = _interopRequireDefault(require("./selectors/root"));
 
-var _dotProp2 = _interopRequireDefault(_dotProp);
+var _selector = _interopRequireDefault(require("./selectors/selector"));
 
-var _indexesOf = require('indexes-of');
+var _className = _interopRequireDefault(require("./selectors/className"));
 
-var _indexesOf2 = _interopRequireDefault(_indexesOf);
+var _comment = _interopRequireDefault(require("./selectors/comment"));
 
-var _uniq = require('uniq');
+var _id = _interopRequireDefault(require("./selectors/id"));
 
-var _uniq2 = _interopRequireDefault(_uniq);
+var _tag = _interopRequireDefault(require("./selectors/tag"));
 
-var _root = require('./selectors/root');
+var _string = _interopRequireDefault(require("./selectors/string"));
 
-var _root2 = _interopRequireDefault(_root);
+var _pseudo = _interopRequireDefault(require("./selectors/pseudo"));
 
-var _selector = require('./selectors/selector');
+var _attribute = _interopRequireWildcard(require("./selectors/attribute"));
 
-var _selector2 = _interopRequireDefault(_selector);
+var _universal = _interopRequireDefault(require("./selectors/universal"));
 
-var _className = require('./selectors/className');
+var _combinator = _interopRequireDefault(require("./selectors/combinator"));
 
-var _className2 = _interopRequireDefault(_className);
+var _nesting = _interopRequireDefault(require("./selectors/nesting"));
 
-var _comment = require('./selectors/comment');
+var _sortAscending = _interopRequireDefault(require("./sortAscending"));
 
-var _comment2 = _interopRequireDefault(_comment);
+var _tokenize = _interopRequireWildcard(require("./tokenize"));
 
-var _id = require('./selectors/id');
+var tokens = _interopRequireWildcard(require("./tokenTypes"));
 
-var _id2 = _interopRequireDefault(_id);
+var types = _interopRequireWildcard(require("./selectors/types"));
 
-var _tag = require('./selectors/tag');
+var _util = require("./util");
 
-var _tag2 = _interopRequireDefault(_tag);
-
-var _string = require('./selectors/string');
-
-var _string2 = _interopRequireDefault(_string);
-
-var _pseudo = require('./selectors/pseudo');
-
-var _pseudo2 = _interopRequireDefault(_pseudo);
-
-var _attribute = require('./selectors/attribute');
-
-var _attribute2 = _interopRequireDefault(_attribute);
-
-var _universal = require('./selectors/universal');
-
-var _universal2 = _interopRequireDefault(_universal);
-
-var _combinator = require('./selectors/combinator');
-
-var _combinator2 = _interopRequireDefault(_combinator);
-
-var _nesting = require('./selectors/nesting');
-
-var _nesting2 = _interopRequireDefault(_nesting);
-
-var _sortAscending = require('./sortAscending');
-
-var _sortAscending2 = _interopRequireDefault(_sortAscending);
-
-var _tokenize = require('./tokenize');
-
-var _tokenize2 = _interopRequireDefault(_tokenize);
-
-var _tokenTypes = require('./tokenTypes');
-
-var tokens = _interopRequireWildcard(_tokenTypes);
-
-var _types = require('./selectors/types');
-
-var types = _interopRequireWildcard(_types);
+var _WHITESPACE_TOKENS, _Object$assign;
 
 function _interopRequireWildcard(obj) {
   if (obj && obj.__esModule) {
@@ -2792,7 +6169,15 @@ function _interopRequireWildcard(obj) {
 
     if (obj != null) {
       for (var key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {};
+
+          if (desc.get || desc.set) {
+            Object.defineProperty(newObj, key, desc);
+          } else {
+            newObj[key] = obj[key];
+          }
+        }
       }
     }
 
@@ -2807,10 +6192,37 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
   }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
+var WHITESPACE_TOKENS = (_WHITESPACE_TOKENS = {}, _WHITESPACE_TOKENS[tokens.space] = true, _WHITESPACE_TOKENS[tokens.cr] = true, _WHITESPACE_TOKENS[tokens.feed] = true, _WHITESPACE_TOKENS[tokens.newline] = true, _WHITESPACE_TOKENS[tokens.tab] = true, _WHITESPACE_TOKENS);
+var WHITESPACE_EQUIV_TOKENS = Object.assign({}, WHITESPACE_TOKENS, (_Object$assign = {}, _Object$assign[tokens.comment] = true, _Object$assign));
+
+function tokenStart(token) {
+  return {
+    line: token[_tokenize.FIELDS.START_LINE],
+    column: token[_tokenize.FIELDS.START_COL]
+  };
+}
+
+function tokenEnd(token) {
+  return {
+    line: token[_tokenize.FIELDS.END_LINE],
+    column: token[_tokenize.FIELDS.END_COL]
+  };
 }
 
 function getSource(startLine, startColumn, endLine, endColumn) {
@@ -2826,11 +6238,44 @@ function getSource(startLine, startColumn, endLine, endColumn) {
   };
 }
 
-var Parser = function () {
-  function Parser(rule) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+function getTokenSource(token) {
+  return getSource(token[_tokenize.FIELDS.START_LINE], token[_tokenize.FIELDS.START_COL], token[_tokenize.FIELDS.END_LINE], token[_tokenize.FIELDS.END_COL]);
+}
 
-    _classCallCheck(this, Parser);
+function getTokenSourceSpan(startToken, endToken) {
+  if (!startToken) {
+    return undefined;
+  }
+
+  return getSource(startToken[_tokenize.FIELDS.START_LINE], startToken[_tokenize.FIELDS.START_COL], endToken[_tokenize.FIELDS.END_LINE], endToken[_tokenize.FIELDS.END_COL]);
+}
+
+function unescapeProp(node, prop) {
+  var value = node[prop];
+
+  if (typeof value !== "string") {
+    return;
+  }
+
+  if (value.indexOf("\\") !== -1) {
+    (0, _util.ensureObject)(node, 'raws');
+    node[prop] = (0, _util.unesc)(value);
+
+    if (node.raws[prop] === undefined) {
+      node.raws[prop] = value;
+    }
+  }
+
+  return node;
+}
+
+var Parser =
+/*#__PURE__*/
+function () {
+  function Parser(rule, options) {
+    if (options === void 0) {
+      options = {};
+    }
 
     this.rule = rule;
     this.options = Object.assign({
@@ -2838,26 +6283,33 @@ var Parser = function () {
       safe: false
     }, options);
     this.position = 0;
-    this.root = new _root2.default();
-    this.root.errorGenerator = this._errorGenerator();
-    var selector = new _selector2.default();
-    this.root.append(selector);
-    this.current = selector;
     this.css = typeof this.rule === 'string' ? this.rule : this.rule.selector;
-
-    if (this.options.lossy) {
-      this.css = this.css.trim();
-    }
-
-    this.tokens = (0, _tokenize2.default)({
+    this.tokens = (0, _tokenize.default)({
       css: this.css,
       error: this._errorGenerator(),
       safe: this.options.safe
     });
+    var rootSource = getTokenSourceSpan(this.tokens[0], this.tokens[this.tokens.length - 1]);
+    this.root = new _root.default({
+      source: rootSource
+    });
+    this.root.errorGenerator = this._errorGenerator();
+    var selector = new _selector.default({
+      source: {
+        start: {
+          line: 1,
+          column: 1
+        }
+      }
+    });
+    this.root.append(selector);
+    this.current = selector;
     this.loop();
   }
 
-  Parser.prototype._errorGenerator = function _errorGenerator() {
+  var _proto = Parser.prototype;
+
+  _proto._errorGenerator = function _errorGenerator() {
     var _this = this;
 
     return function (message, errorOptions) {
@@ -2869,28 +6321,28 @@ var Parser = function () {
     };
   };
 
-  Parser.prototype.attribute = function attribute() {
+  _proto.attribute = function attribute() {
     var attr = [];
     var startingToken = this.currToken;
     this.position++;
 
-    while (this.position < this.tokens.length && this.currToken[0] !== tokens.closeSquare) {
+    while (this.position < this.tokens.length && this.currToken[_tokenize.FIELDS.TYPE] !== tokens.closeSquare) {
       attr.push(this.currToken);
       this.position++;
     }
 
-    if (this.currToken[0] !== tokens.closeSquare) {
-      return this.expected('closing square bracket', this.currToken[5]);
+    if (this.currToken[_tokenize.FIELDS.TYPE] !== tokens.closeSquare) {
+      return this.expected('closing square bracket', this.currToken[_tokenize.FIELDS.START_POS]);
     }
 
     var len = attr.length;
     var node = {
       source: getSource(startingToken[1], startingToken[2], this.currToken[3], this.currToken[4]),
-      sourceIndex: startingToken[5]
+      sourceIndex: startingToken[_tokenize.FIELDS.START_POS]
     };
 
-    if (len === 1 && !~[tokens.word].indexOf(attr[0][0])) {
-      return this.expected('attribute', attr[0][5]);
+    if (len === 1 && !~[tokens.word].indexOf(attr[0][_tokenize.FIELDS.TYPE])) {
+      return this.expected('attribute', attr[0][_tokenize.FIELDS.START_POS]);
     }
 
     var pos = 0;
@@ -2904,12 +6356,14 @@ var Parser = function () {
       var content = this.content(token);
       var next = attr[pos + 1];
 
-      switch (token[0]) {
+      switch (token[_tokenize.FIELDS.TYPE]) {
         case tokens.space:
-          if (len === 1 || pos === 0 && this.content(next) === '|') {
-            return this.expected('attribute', token[5], content);
-          }
-
+          // if (
+          //     len === 1 ||
+          //     pos === 0 && this.content(next) === '|'
+          // ) {
+          //     return this.expected('attribute', token[TOKEN.START_POS], content);
+          // }
           spaceAfterMeaningfulToken = true;
 
           if (this.options.lossy) {
@@ -2917,16 +6371,13 @@ var Parser = function () {
           }
 
           if (lastAdded) {
-            var spaceProp = 'spaces.' + lastAdded + '.after';
-
-            _dotProp2.default.set(node, spaceProp, _dotProp2.default.get(node, spaceProp, '') + content);
-
-            var commentProp = 'raws.spaces.' + lastAdded + '.after';
-
-            var existingComment = _dotProp2.default.get(node, commentProp);
+            (0, _util.ensureObject)(node, 'spaces', lastAdded);
+            var prevContent = node.spaces[lastAdded].after || '';
+            node.spaces[lastAdded].after = prevContent + content;
+            var existingComment = (0, _util.getProp)(node, 'raws', 'spaces', lastAdded, 'after') || null;
 
             if (existingComment) {
-              _dotProp2.default.set(node, commentProp, existingComment + content);
+              node.raws.spaces[lastAdded].after = existingComment + content;
             }
           } else {
             spaceBefore = spaceBefore + content;
@@ -2936,25 +6387,24 @@ var Parser = function () {
           break;
 
         case tokens.asterisk:
-          if (next[0] === tokens.equals) {
+          if (next[_tokenize.FIELDS.TYPE] === tokens.equals) {
             node.operator = content;
             lastAdded = 'operator';
           } else if ((!node.namespace || lastAdded === "namespace" && !spaceAfterMeaningfulToken) && next) {
             if (spaceBefore) {
-              _dotProp2.default.set(node, 'spaces.attribute.before', spaceBefore);
-
+              (0, _util.ensureObject)(node, 'spaces', 'attribute');
+              node.spaces.attribute.before = spaceBefore;
               spaceBefore = '';
             }
 
             if (commentBefore) {
-              _dotProp2.default.set(node, 'raws.spaces.attribute.before', spaceBefore);
-
+              (0, _util.ensureObject)(node, 'raws', 'spaces', 'attribute');
+              node.raws.spaces.attribute.before = spaceBefore;
               commentBefore = '';
             }
 
             node.namespace = (node.namespace || "") + content;
-
-            var rawValue = _dotProp2.default.get(node, "raws.namespace");
+            var rawValue = (0, _util.getProp)(node, 'raws', 'namespace') || null;
 
             if (rawValue) {
               node.raws.namespace += content;
@@ -2967,8 +6417,21 @@ var Parser = function () {
           break;
 
         case tokens.dollar:
+          if (lastAdded === "value") {
+            var oldRawValue = (0, _util.getProp)(node, 'raws', 'value');
+            node.value += "$";
+
+            if (oldRawValue) {
+              node.raws.value = oldRawValue + "$";
+            }
+
+            break;
+          }
+
+        // Falls through
+
         case tokens.caret:
-          if (next[0] === tokens.equals) {
+          if (next[_tokenize.FIELDS.TYPE] === tokens.equals) {
             node.operator = content;
             lastAdded = 'operator';
           }
@@ -2977,7 +6440,7 @@ var Parser = function () {
           break;
 
         case tokens.combinator:
-          if (content === '~' && next[0] === tokens.equals) {
+          if (content === '~' && next[_tokenize.FIELDS.TYPE] === tokens.equals) {
             node.operator = content;
             lastAdded = 'operator';
           }
@@ -2987,7 +6450,7 @@ var Parser = function () {
             break;
           }
 
-          if (next[0] === tokens.equals) {
+          if (next[_tokenize.FIELDS.TYPE] === tokens.equals) {
             node.operator = content;
             lastAdded = 'operator';
           } else if (!node.namespace && !node.attribute) {
@@ -2998,66 +6461,77 @@ var Parser = function () {
           break;
 
         case tokens.word:
-          if (next && this.content(next) === '|' && attr[pos + 2] && attr[pos + 2][0] !== tokens.equals && // this look-ahead probably fails with comment nodes involved.
+          if (next && this.content(next) === '|' && attr[pos + 2] && attr[pos + 2][_tokenize.FIELDS.TYPE] !== tokens.equals && // this look-ahead probably fails with comment nodes involved.
           !node.operator && !node.namespace) {
             node.namespace = content;
             lastAdded = 'namespace';
           } else if (!node.attribute || lastAdded === "attribute" && !spaceAfterMeaningfulToken) {
             if (spaceBefore) {
-              _dotProp2.default.set(node, 'spaces.attribute.before', spaceBefore);
-
+              (0, _util.ensureObject)(node, 'spaces', 'attribute');
+              node.spaces.attribute.before = spaceBefore;
               spaceBefore = '';
             }
 
             if (commentBefore) {
-              _dotProp2.default.set(node, 'raws.spaces.attribute.before', commentBefore);
-
+              (0, _util.ensureObject)(node, 'raws', 'spaces', 'attribute');
+              node.raws.spaces.attribute.before = commentBefore;
               commentBefore = '';
             }
 
             node.attribute = (node.attribute || "") + content;
 
-            var _rawValue = _dotProp2.default.get(node, "raws.attribute");
+            var _rawValue = (0, _util.getProp)(node, 'raws', 'attribute') || null;
 
             if (_rawValue) {
               node.raws.attribute += content;
             }
 
             lastAdded = 'attribute';
-          } else if (!node.value || lastAdded === "value" && !spaceAfterMeaningfulToken) {
-            node.value = (node.value || "") + content;
+          } else if (!node.value && node.value !== "" || lastAdded === "value" && !spaceAfterMeaningfulToken) {
+            var _unescaped = (0, _util.unesc)(content);
 
-            var _rawValue2 = _dotProp2.default.get(node, "raws.value");
+            var _oldRawValue = (0, _util.getProp)(node, 'raws', 'value') || '';
 
-            if (_rawValue2) {
-              node.raws.value += content;
+            var oldValue = node.value || '';
+            node.value = oldValue + _unescaped;
+            node.quoteMark = null;
+
+            if (_unescaped !== content || _oldRawValue) {
+              (0, _util.ensureObject)(node, 'raws');
+              node.raws.value = (_oldRawValue || oldValue) + content;
             }
 
             lastAdded = 'value';
+          } else {
+            var insensitive = content === 'i' || content === "I";
 
-            _dotProp2.default.set(node, 'raws.unquoted', _dotProp2.default.get(node, 'raws.unquoted', '') + content);
-          } else if (content === 'i') {
-            if (node.value && (node.quoted || spaceAfterMeaningfulToken)) {
-              node.insensitive = true;
+            if ((node.value || node.value === '') && (node.quoteMark || spaceAfterMeaningfulToken)) {
+              node.insensitive = insensitive;
+
+              if (!insensitive || content === "I") {
+                (0, _util.ensureObject)(node, 'raws');
+                node.raws.insensitiveFlag = content;
+              }
+
               lastAdded = 'insensitive';
 
               if (spaceBefore) {
-                _dotProp2.default.set(node, 'spaces.insensitive.before', spaceBefore);
-
+                (0, _util.ensureObject)(node, 'spaces', 'insensitive');
+                node.spaces.insensitive.before = spaceBefore;
                 spaceBefore = '';
               }
 
               if (commentBefore) {
-                _dotProp2.default.set(node, 'raws.spaces.insensitive.before', commentBefore);
-
+                (0, _util.ensureObject)(node, 'raws', 'spaces', 'insensitive');
+                node.raws.spaces.insensitive.before = commentBefore;
                 commentBefore = '';
               }
-            } else if (node.value) {
+            } else if (node.value || node.value === '') {
               lastAdded = 'value';
-              node.value += 'i';
+              node.value += content;
 
               if (node.raws.value) {
-                node.raws.value += 'i';
+                node.raws.value += content;
               }
             }
           }
@@ -3067,28 +6541,31 @@ var Parser = function () {
 
         case tokens.str:
           if (!node.attribute || !node.operator) {
-            return this.error('Expected an attribute followed by an operator preceding the string.', {
-              index: token[5]
+            return this.error("Expected an attribute followed by an operator preceding the string.", {
+              index: token[_tokenize.FIELDS.START_POS]
             });
           }
 
-          node.value = content;
-          node.quoted = true;
+          var _unescapeValue = (0, _attribute.unescapeValue)(content),
+              unescaped = _unescapeValue.unescaped,
+              quoteMark = _unescapeValue.quoteMark;
+
+          node.value = unescaped;
+          node.quoteMark = quoteMark;
           lastAdded = 'value';
-
-          _dotProp2.default.set(node, 'raws.unquoted', content.slice(1, -1));
-
+          (0, _util.ensureObject)(node, 'raws');
+          node.raws.value = content;
           spaceAfterMeaningfulToken = false;
           break;
 
         case tokens.equals:
           if (!node.attribute) {
-            return this.expected('attribute', token[5], content);
+            return this.expected('attribute', token[_tokenize.FIELDS.START_POS], content);
           }
 
           if (node.value) {
             return this.error('Unexpected "=" found; an operator was already defined.', {
-              index: token[5]
+              index: token[_tokenize.FIELDS.START_POS]
             });
           }
 
@@ -3099,14 +6576,16 @@ var Parser = function () {
 
         case tokens.comment:
           if (lastAdded) {
-            if (spaceAfterMeaningfulToken || next && next[0] === tokens.space) {
-              var lastComment = _dotProp2.default.get(node, 'raws.spaces.' + lastAdded + '.after', _dotProp2.default.get(node, 'spaces.' + lastAdded + '.after', ''));
-
-              _dotProp2.default.set(node, 'raws.spaces.' + lastAdded + '.after', lastComment + content);
+            if (spaceAfterMeaningfulToken || next && next[_tokenize.FIELDS.TYPE] === tokens.space || lastAdded === 'insensitive') {
+              var lastComment = (0, _util.getProp)(node, 'spaces', lastAdded, 'after') || '';
+              var rawLastComment = (0, _util.getProp)(node, 'raws', 'spaces', lastAdded, 'after') || lastComment;
+              (0, _util.ensureObject)(node, 'raws', 'spaces', lastAdded);
+              node.raws.spaces[lastAdded].after = rawLastComment + content;
             } else {
-              var lastValue = _dotProp2.default.get(node, 'raws.' + lastAdded, _dotProp2.default.get(node, lastAdded, ''));
-
-              _dotProp2.default.set(node, 'raws.' + lastAdded, lastValue + content);
+              var lastValue = node[lastAdded] || '';
+              var rawLastValue = (0, _util.getProp)(node, 'raws', lastAdded) || lastValue;
+              (0, _util.ensureObject)(node, 'raws');
+              node.raws[lastAdded] = rawLastValue + content;
             }
           } else {
             commentBefore = commentBefore + content;
@@ -3115,174 +6594,422 @@ var Parser = function () {
           break;
 
         default:
-          return this.error('Unexpected "' + content + '" found.', {
-            index: token[5]
+          return this.error("Unexpected \"" + content + "\" found.", {
+            index: token[_tokenize.FIELDS.START_POS]
           });
       }
 
       pos++;
     }
 
-    this.newNode(new _attribute2.default(node));
+    unescapeProp(node, "attribute");
+    unescapeProp(node, "namespace");
+    this.newNode(new _attribute.default(node));
     this.position++;
+  }
+  /**
+   * return a node containing meaningless garbage up to (but not including) the specified token position.
+   * if the token position is negative, all remaining tokens are consumed.
+   *
+   * This returns an array containing a single string node if all whitespace,
+   * otherwise an array of comment nodes with space before and after.
+   *
+   * These tokens are not added to the current selector, the caller can add them or use them to amend
+   * a previous node's space metadata.
+   *
+   * In lossy mode, this returns only comments.
+   */
+  ;
+
+  _proto.parseWhitespaceEquivalentTokens = function parseWhitespaceEquivalentTokens(stopPosition) {
+    if (stopPosition < 0) {
+      stopPosition = this.tokens.length;
+    }
+
+    var startPosition = this.position;
+    var nodes = [];
+    var space = "";
+    var lastComment = undefined;
+
+    do {
+      if (WHITESPACE_TOKENS[this.currToken[_tokenize.FIELDS.TYPE]]) {
+        if (!this.options.lossy) {
+          space += this.content();
+        }
+      } else if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.comment) {
+        var spaces = {};
+
+        if (space) {
+          spaces.before = space;
+          space = "";
+        }
+
+        lastComment = new _comment.default({
+          value: this.content(),
+          source: getTokenSource(this.currToken),
+          sourceIndex: this.currToken[_tokenize.FIELDS.START_POS],
+          spaces: spaces
+        });
+        nodes.push(lastComment);
+      }
+    } while (++this.position < stopPosition);
+
+    if (space) {
+      if (lastComment) {
+        lastComment.spaces.after = space;
+      } else if (!this.options.lossy) {
+        var firstToken = this.tokens[startPosition];
+        var lastToken = this.tokens[this.position - 1];
+        nodes.push(new _string.default({
+          value: '',
+          source: getSource(firstToken[_tokenize.FIELDS.START_LINE], firstToken[_tokenize.FIELDS.START_COL], lastToken[_tokenize.FIELDS.END_LINE], lastToken[_tokenize.FIELDS.END_COL]),
+          sourceIndex: firstToken[_tokenize.FIELDS.START_POS],
+          spaces: {
+            before: space,
+            after: ''
+          }
+        }));
+      }
+    }
+
+    return nodes;
+  }
+  /**
+   * 
+   * @param {*} nodes 
+   */
+  ;
+
+  _proto.convertWhitespaceNodesToSpace = function convertWhitespaceNodesToSpace(nodes, requiredSpace) {
+    var _this2 = this;
+
+    if (requiredSpace === void 0) {
+      requiredSpace = false;
+    }
+
+    var space = "";
+    var rawSpace = "";
+    nodes.forEach(function (n) {
+      var spaceBefore = _this2.lossySpace(n.spaces.before, requiredSpace);
+
+      var rawSpaceBefore = _this2.lossySpace(n.rawSpaceBefore, requiredSpace);
+
+      space += spaceBefore + _this2.lossySpace(n.spaces.after, requiredSpace && spaceBefore.length === 0);
+      rawSpace += spaceBefore + n.value + _this2.lossySpace(n.rawSpaceAfter, requiredSpace && rawSpaceBefore.length === 0);
+    });
+
+    if (rawSpace === space) {
+      rawSpace = undefined;
+    }
+
+    var result = {
+      space: space,
+      rawSpace: rawSpace
+    };
+    return result;
   };
 
-  Parser.prototype.combinator = function combinator() {
-    var current = this.currToken;
+  _proto.isNamedCombinator = function isNamedCombinator(position) {
+    if (position === void 0) {
+      position = this.position;
+    }
+
+    return this.tokens[position + 0] && this.tokens[position + 0][_tokenize.FIELDS.TYPE] === tokens.slash && this.tokens[position + 1] && this.tokens[position + 1][_tokenize.FIELDS.TYPE] === tokens.word && this.tokens[position + 2] && this.tokens[position + 2][_tokenize.FIELDS.TYPE] === tokens.slash;
+  };
+
+  _proto.namedCombinator = function namedCombinator() {
+    if (this.isNamedCombinator()) {
+      var nameRaw = this.content(this.tokens[this.position + 1]);
+      var name = (0, _util.unesc)(nameRaw).toLowerCase();
+      var raws = {};
+
+      if (name !== nameRaw) {
+        raws.value = "/" + nameRaw + "/";
+      }
+
+      var node = new _combinator.default({
+        value: "/" + name + "/",
+        source: getSource(this.currToken[_tokenize.FIELDS.START_LINE], this.currToken[_tokenize.FIELDS.START_COL], this.tokens[this.position + 2][_tokenize.FIELDS.END_LINE], this.tokens[this.position + 2][_tokenize.FIELDS.END_COL]),
+        sourceIndex: this.currToken[_tokenize.FIELDS.START_POS],
+        raws: raws
+      });
+      this.position = this.position + 3;
+      return node;
+    } else {
+      this.unexpected();
+    }
+  };
+
+  _proto.combinator = function combinator() {
+    var _this3 = this;
 
     if (this.content() === '|') {
       return this.namespace();
-    }
+    } // We need to decide between a space that's a descendant combinator and meaningless whitespace at the end of a selector.
 
-    var node = new _combinator2.default({
-      value: '',
-      source: getSource(current[1], current[2], current[3], current[4]),
-      sourceIndex: current[5]
-    });
 
-    while (this.position < this.tokens.length && this.currToken && (this.currToken[0] === tokens.space || this.currToken[0] === tokens.combinator)) {
-      var content = this.content();
+    var nextSigTokenPos = this.locateNextMeaningfulToken(this.position);
 
-      if (this.nextToken && this.nextToken[0] === tokens.combinator) {
-        node.spaces.before = this.parseSpace(content);
-        node.source = getSource(this.nextToken[1], this.nextToken[2], this.nextToken[3], this.nextToken[4]);
-        node.sourceIndex = this.nextToken[5];
-      } else if (this.prevToken && this.prevToken[0] === tokens.combinator) {
-        node.spaces.after = this.parseSpace(content);
-      } else if (this.currToken[0] === tokens.combinator) {
-        node.value = content;
-      } else if (this.currToken[0] === tokens.space) {
-        node.value = this.parseSpace(content, ' ');
+    if (nextSigTokenPos < 0 || this.tokens[nextSigTokenPos][_tokenize.FIELDS.TYPE] === tokens.comma) {
+      var nodes = this.parseWhitespaceEquivalentTokens(nextSigTokenPos);
+
+      if (nodes.length > 0) {
+        var last = this.current.last;
+
+        if (last) {
+          var _this$convertWhitespa = this.convertWhitespaceNodesToSpace(nodes),
+              space = _this$convertWhitespa.space,
+              rawSpace = _this$convertWhitespa.rawSpace;
+
+          if (rawSpace !== undefined) {
+            last.rawSpaceAfter += rawSpace;
+          }
+
+          last.spaces.after += space;
+        } else {
+          nodes.forEach(function (n) {
+            return _this3.newNode(n);
+          });
+        }
       }
 
+      return;
+    }
+
+    var firstToken = this.currToken;
+    var spaceOrDescendantSelectorNodes = undefined;
+
+    if (nextSigTokenPos > this.position) {
+      spaceOrDescendantSelectorNodes = this.parseWhitespaceEquivalentTokens(nextSigTokenPos);
+    }
+
+    var node;
+
+    if (this.isNamedCombinator()) {
+      node = this.namedCombinator();
+    } else if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.combinator) {
+      node = new _combinator.default({
+        value: this.content(),
+        source: getTokenSource(this.currToken),
+        sourceIndex: this.currToken[_tokenize.FIELDS.START_POS]
+      });
+      this.position++;
+    } else if (WHITESPACE_TOKENS[this.currToken[_tokenize.FIELDS.TYPE]]) {// pass
+    } else if (!spaceOrDescendantSelectorNodes) {
+      this.unexpected();
+    }
+
+    if (node) {
+      if (spaceOrDescendantSelectorNodes) {
+        var _this$convertWhitespa2 = this.convertWhitespaceNodesToSpace(spaceOrDescendantSelectorNodes),
+            _space = _this$convertWhitespa2.space,
+            _rawSpace = _this$convertWhitespa2.rawSpace;
+
+        node.spaces.before = _space;
+        node.rawSpaceBefore = _rawSpace;
+      }
+    } else {
+      // descendant combinator
+      var _this$convertWhitespa3 = this.convertWhitespaceNodesToSpace(spaceOrDescendantSelectorNodes, true),
+          _space2 = _this$convertWhitespa3.space,
+          _rawSpace2 = _this$convertWhitespa3.rawSpace;
+
+      if (!_rawSpace2) {
+        _rawSpace2 = _space2;
+      }
+
+      var spaces = {};
+      var raws = {
+        spaces: {}
+      };
+
+      if (_space2.endsWith(' ') && _rawSpace2.endsWith(' ')) {
+        spaces.before = _space2.slice(0, _space2.length - 1);
+        raws.spaces.before = _rawSpace2.slice(0, _rawSpace2.length - 1);
+      } else if (_space2.startsWith(' ') && _rawSpace2.startsWith(' ')) {
+        spaces.after = _space2.slice(1);
+        raws.spaces.after = _rawSpace2.slice(1);
+      } else {
+        raws.value = _rawSpace2;
+      }
+
+      node = new _combinator.default({
+        value: ' ',
+        source: getTokenSourceSpan(firstToken, this.tokens[this.position - 1]),
+        sourceIndex: firstToken[_tokenize.FIELDS.START_POS],
+        spaces: spaces,
+        raws: raws
+      });
+    }
+
+    if (this.currToken && this.currToken[_tokenize.FIELDS.TYPE] === tokens.space) {
+      node.spaces.after = this.optionalSpace(this.content());
       this.position++;
     }
 
     return this.newNode(node);
   };
 
-  Parser.prototype.comma = function comma() {
+  _proto.comma = function comma() {
     if (this.position === this.tokens.length - 1) {
       this.root.trailingComma = true;
       this.position++;
       return;
     }
 
-    var selector = new _selector2.default();
+    this.current._inferEndPosition();
+
+    var selector = new _selector.default({
+      source: {
+        start: tokenStart(this.tokens[this.position + 1])
+      }
+    });
     this.current.parent.append(selector);
     this.current = selector;
     this.position++;
   };
 
-  Parser.prototype.comment = function comment() {
+  _proto.comment = function comment() {
     var current = this.currToken;
-    this.newNode(new _comment2.default({
+    this.newNode(new _comment.default({
       value: this.content(),
-      source: getSource(current[1], current[2], current[3], current[4]),
-      sourceIndex: current[5]
+      source: getTokenSource(current),
+      sourceIndex: current[_tokenize.FIELDS.START_POS]
     }));
     this.position++;
   };
 
-  Parser.prototype.error = function error(message, opts) {
+  _proto.error = function error(message, opts) {
     throw this.root.error(message, opts);
   };
 
-  Parser.prototype.missingBackslash = function missingBackslash() {
+  _proto.missingBackslash = function missingBackslash() {
     return this.error('Expected a backslash preceding the semicolon.', {
-      index: this.currToken[5]
+      index: this.currToken[_tokenize.FIELDS.START_POS]
     });
   };
 
-  Parser.prototype.missingParenthesis = function missingParenthesis() {
-    return this.expected('opening parenthesis', this.currToken[5]);
+  _proto.missingParenthesis = function missingParenthesis() {
+    return this.expected('opening parenthesis', this.currToken[_tokenize.FIELDS.START_POS]);
   };
 
-  Parser.prototype.missingSquareBracket = function missingSquareBracket() {
-    return this.expected('opening square bracket', this.currToken[5]);
+  _proto.missingSquareBracket = function missingSquareBracket() {
+    return this.expected('opening square bracket', this.currToken[_tokenize.FIELDS.START_POS]);
   };
 
-  Parser.prototype.namespace = function namespace() {
+  _proto.unexpected = function unexpected() {
+    return this.error("Unexpected '" + this.content() + "'. Escaping special characters with \\ may help.", this.currToken[_tokenize.FIELDS.START_POS]);
+  };
+
+  _proto.namespace = function namespace() {
     var before = this.prevToken && this.content(this.prevToken) || true;
 
-    if (this.nextToken[0] === tokens.word) {
+    if (this.nextToken[_tokenize.FIELDS.TYPE] === tokens.word) {
       this.position++;
       return this.word(before);
-    } else if (this.nextToken[0] === tokens.asterisk) {
+    } else if (this.nextToken[_tokenize.FIELDS.TYPE] === tokens.asterisk) {
       this.position++;
       return this.universal(before);
     }
   };
 
-  Parser.prototype.nesting = function nesting() {
+  _proto.nesting = function nesting() {
+    if (this.nextToken) {
+      var nextContent = this.content(this.nextToken);
+
+      if (nextContent === "|") {
+        this.position++;
+        return;
+      }
+    }
+
     var current = this.currToken;
-    this.newNode(new _nesting2.default({
+    this.newNode(new _nesting.default({
       value: this.content(),
-      source: getSource(current[1], current[2], current[3], current[4]),
-      sourceIndex: current[5]
+      source: getTokenSource(current),
+      sourceIndex: current[_tokenize.FIELDS.START_POS]
     }));
     this.position++;
   };
 
-  Parser.prototype.parentheses = function parentheses() {
+  _proto.parentheses = function parentheses() {
     var last = this.current.last;
-    var balanced = 1;
+    var unbalanced = 1;
     this.position++;
 
     if (last && last.type === types.PSEUDO) {
-      var selector = new _selector2.default();
+      var selector = new _selector.default({
+        source: {
+          start: tokenStart(this.tokens[this.position - 1])
+        }
+      });
       var cache = this.current;
       last.append(selector);
       this.current = selector;
 
-      while (this.position < this.tokens.length && balanced) {
-        if (this.currToken[0] === tokens.openParenthesis) {
-          balanced++;
+      while (this.position < this.tokens.length && unbalanced) {
+        if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.openParenthesis) {
+          unbalanced++;
         }
 
-        if (this.currToken[0] === tokens.closeParenthesis) {
-          balanced--;
+        if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.closeParenthesis) {
+          unbalanced--;
         }
 
-        if (balanced) {
+        if (unbalanced) {
           this.parse();
         } else {
-          selector.parent.source.end.line = this.currToken[3];
-          selector.parent.source.end.column = this.currToken[4];
+          this.current.source.end = tokenEnd(this.currToken);
+          this.current.parent.source.end = tokenEnd(this.currToken);
           this.position++;
         }
       }
 
       this.current = cache;
     } else {
-      last.value += '(';
+      // I think this case should be an error. It's used to implement a basic parse of media queries
+      // but I don't think it's a good idea.
+      var parenStart = this.currToken;
+      var parenValue = "(";
+      var parenEnd;
 
-      while (this.position < this.tokens.length && balanced) {
-        if (this.currToken[0] === tokens.openParenthesis) {
-          balanced++;
+      while (this.position < this.tokens.length && unbalanced) {
+        if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.openParenthesis) {
+          unbalanced++;
         }
 
-        if (this.currToken[0] === tokens.closeParenthesis) {
-          balanced--;
+        if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.closeParenthesis) {
+          unbalanced--;
         }
 
-        last.value += this.parseParenthesisToken(this.currToken);
+        parenEnd = this.currToken;
+        parenValue += this.parseParenthesisToken(this.currToken);
         this.position++;
+      }
+
+      if (last) {
+        last.appendToPropertyAndEscape("value", parenValue, parenValue);
+      } else {
+        this.newNode(new _string.default({
+          value: parenValue,
+          source: getSource(parenStart[_tokenize.FIELDS.START_LINE], parenStart[_tokenize.FIELDS.START_COL], parenEnd[_tokenize.FIELDS.END_LINE], parenEnd[_tokenize.FIELDS.END_COL]),
+          sourceIndex: parenStart[_tokenize.FIELDS.START_POS]
+        }));
       }
     }
 
-    if (balanced) {
-      return this.expected('closing parenthesis', this.currToken[5]);
+    if (unbalanced) {
+      return this.expected('closing parenthesis', this.currToken[_tokenize.FIELDS.START_POS]);
     }
   };
 
-  Parser.prototype.pseudo = function pseudo() {
-    var _this2 = this;
+  _proto.pseudo = function pseudo() {
+    var _this4 = this;
 
     var pseudoStr = '';
     var startingToken = this.currToken;
 
-    while (this.currToken && this.currToken[0] === tokens.colon) {
+    while (this.currToken && this.currToken[_tokenize.FIELDS.TYPE] === tokens.colon) {
       pseudoStr += this.content();
       this.position++;
     }
@@ -3291,52 +7018,52 @@ var Parser = function () {
       return this.expected(['pseudo-class', 'pseudo-element'], this.position - 1);
     }
 
-    if (this.currToken[0] === tokens.word) {
+    if (this.currToken[_tokenize.FIELDS.TYPE] === tokens.word) {
       this.splitWord(false, function (first, length) {
         pseudoStr += first;
 
-        _this2.newNode(new _pseudo2.default({
+        _this4.newNode(new _pseudo.default({
           value: pseudoStr,
-          source: getSource(startingToken[1], startingToken[2], _this2.currToken[3], _this2.currToken[4]),
-          sourceIndex: startingToken[5]
+          source: getTokenSourceSpan(startingToken, _this4.currToken),
+          sourceIndex: startingToken[_tokenize.FIELDS.START_POS]
         }));
 
-        if (length > 1 && _this2.nextToken && _this2.nextToken[0] === tokens.openParenthesis) {
-          _this2.error('Misplaced parenthesis.', {
-            index: _this2.nextToken[5]
+        if (length > 1 && _this4.nextToken && _this4.nextToken[_tokenize.FIELDS.TYPE] === tokens.openParenthesis) {
+          _this4.error('Misplaced parenthesis.', {
+            index: _this4.nextToken[_tokenize.FIELDS.START_POS]
           });
         }
       });
     } else {
-      return this.expected(['pseudo-class', 'pseudo-element'], this.currToken[5]);
+      return this.expected(['pseudo-class', 'pseudo-element'], this.currToken[_tokenize.FIELDS.START_POS]);
     }
   };
 
-  Parser.prototype.space = function space() {
+  _proto.space = function space() {
     var content = this.content(); // Handle space before and after the selector
 
-    if (this.position === 0 || this.prevToken[0] === tokens.comma || this.prevToken[0] === tokens.openParenthesis) {
-      this.spaces = this.parseSpace(content);
+    if (this.position === 0 || this.prevToken[_tokenize.FIELDS.TYPE] === tokens.comma || this.prevToken[_tokenize.FIELDS.TYPE] === tokens.openParenthesis) {
+      this.spaces = this.optionalSpace(content);
       this.position++;
-    } else if (this.position === this.tokens.length - 1 || this.nextToken[0] === tokens.comma || this.nextToken[0] === tokens.closeParenthesis) {
-      this.current.last.spaces.after = this.parseSpace(content);
+    } else if (this.position === this.tokens.length - 1 || this.nextToken[_tokenize.FIELDS.TYPE] === tokens.comma || this.nextToken[_tokenize.FIELDS.TYPE] === tokens.closeParenthesis) {
+      this.current.last.spaces.after = this.optionalSpace(content);
       this.position++;
     } else {
       this.combinator();
     }
   };
 
-  Parser.prototype.string = function string() {
+  _proto.string = function string() {
     var current = this.currToken;
-    this.newNode(new _string2.default({
+    this.newNode(new _string.default({
       value: this.content(),
-      source: getSource(current[1], current[2], current[3], current[4]),
-      sourceIndex: current[5]
+      source: getTokenSource(current),
+      sourceIndex: current[_tokenize.FIELDS.START_POS]
     }));
     this.position++;
   };
 
-  Parser.prototype.universal = function universal(namespace) {
+  _proto.universal = function universal(namespace) {
     var nextToken = this.nextToken;
 
     if (nextToken && this.content(nextToken) === '|') {
@@ -3345,21 +7072,21 @@ var Parser = function () {
     }
 
     var current = this.currToken;
-    this.newNode(new _universal2.default({
+    this.newNode(new _universal.default({
       value: this.content(),
-      source: getSource(current[1], current[2], current[3], current[4]),
-      sourceIndex: current[5]
+      source: getTokenSource(current),
+      sourceIndex: current[_tokenize.FIELDS.START_POS]
     }), namespace);
     this.position++;
   };
 
-  Parser.prototype.splitWord = function splitWord(namespace, firstCallback) {
-    var _this3 = this;
+  _proto.splitWord = function splitWord(namespace, firstCallback) {
+    var _this5 = this;
 
     var nextToken = this.nextToken;
     var word = this.content();
 
-    while (nextToken && ~[tokens.dollar, tokens.caret, tokens.equals, tokens.word].indexOf(nextToken[0])) {
+    while (nextToken && ~[tokens.dollar, tokens.caret, tokens.equals, tokens.word].indexOf(nextToken[_tokenize.FIELDS.TYPE])) {
       this.position++;
       var current = this.content();
       word += current;
@@ -3367,8 +7094,8 @@ var Parser = function () {
       if (current.lastIndexOf('\\') === current.length - 1) {
         var next = this.nextToken;
 
-        if (next && next[0] === tokens.space) {
-          word += this.parseSpace(this.content(next), ' ');
+        if (next && next[_tokenize.FIELDS.TYPE] === tokens.space) {
+          word += this.requiredSpace(this.content(next));
           this.position++;
         }
       }
@@ -3376,10 +7103,14 @@ var Parser = function () {
       nextToken = this.nextToken;
     }
 
-    var hasClass = (0, _indexesOf2.default)(word, '.');
-    var hasId = (0, _indexesOf2.default)(word, '#'); // Eliminate Sass interpolations from the list of id indexes
+    var hasClass = (0, _indexesOf.default)(word, '.').filter(function (i) {
+      return word[i - 1] !== '\\';
+    });
+    var hasId = (0, _indexesOf.default)(word, '#').filter(function (i) {
+      return word[i - 1] !== '\\';
+    }); // Eliminate Sass interpolations from the list of id indexes
 
-    var interpolations = (0, _indexesOf2.default)(word, '#{');
+    var interpolations = (0, _indexesOf.default)(word, '#{');
 
     if (interpolations.length) {
       hasId = hasId.filter(function (hashIndex) {
@@ -3387,41 +7118,45 @@ var Parser = function () {
       });
     }
 
-    var indices = (0, _sortAscending2.default)((0, _uniq2.default)([0].concat(hasClass, hasId)));
+    var indices = (0, _sortAscending.default)((0, _uniq.default)([0].concat(hasClass, hasId)));
     indices.forEach(function (ind, i) {
       var index = indices[i + 1] || word.length;
       var value = word.slice(ind, index);
 
       if (i === 0 && firstCallback) {
-        return firstCallback.call(_this3, value, indices.length);
+        return firstCallback.call(_this5, value, indices.length);
       }
 
-      var node = void 0;
-      var current = _this3.currToken;
-      var sourceIndex = current[5] + indices[i];
+      var node;
+      var current = _this5.currToken;
+      var sourceIndex = current[_tokenize.FIELDS.START_POS] + indices[i];
       var source = getSource(current[1], current[2] + ind, current[3], current[2] + (index - 1));
 
       if (~hasClass.indexOf(ind)) {
-        node = new _className2.default({
+        var classNameOpts = {
           value: value.slice(1),
           source: source,
           sourceIndex: sourceIndex
-        });
+        };
+        node = new _className.default(unescapeProp(classNameOpts, "value"));
       } else if (~hasId.indexOf(ind)) {
-        node = new _id2.default({
+        var idOpts = {
           value: value.slice(1),
           source: source,
           sourceIndex: sourceIndex
-        });
+        };
+        node = new _id.default(unescapeProp(idOpts, "value"));
       } else {
-        node = new _tag2.default({
+        var tagOpts = {
           value: value,
           source: source,
           sourceIndex: sourceIndex
-        });
+        };
+        unescapeProp(tagOpts, "value");
+        node = new _tag.default(tagOpts);
       }
 
-      _this3.newNode(node, namespace); // Ensure that the namespace is used only once
+      _this5.newNode(node, namespace); // Ensure that the namespace is used only once
 
 
       namespace = null;
@@ -3429,7 +7164,7 @@ var Parser = function () {
     this.position++;
   };
 
-  Parser.prototype.word = function word(namespace) {
+  _proto.word = function word(namespace) {
     var nextToken = this.nextToken;
 
     if (nextToken && this.content(nextToken) === '|') {
@@ -3440,16 +7175,18 @@ var Parser = function () {
     return this.splitWord(namespace);
   };
 
-  Parser.prototype.loop = function loop() {
+  _proto.loop = function loop() {
     while (this.position < this.tokens.length) {
       this.parse(true);
     }
 
+    this.current._inferEndPosition();
+
     return this.root;
   };
 
-  Parser.prototype.parse = function parse(throwOnParenthesis) {
-    switch (this.currToken[0]) {
+  _proto.parse = function parse(throwOnParenthesis) {
+    switch (this.currToken[_tokenize.FIELDS.TYPE]) {
       case tokens.space:
         this.space();
         break;
@@ -3496,6 +7233,7 @@ var Parser = function () {
         this.nesting();
         break;
 
+      case tokens.slash:
       case tokens.combinator:
         this.combinator();
         break;
@@ -3510,76 +7248,73 @@ var Parser = function () {
 
       case tokens.semicolon:
         this.missingBackslash();
+
+      default:
+        this.unexpected();
     }
-  };
+  }
   /**
    * Helpers
    */
+  ;
 
-
-  Parser.prototype.expected = function expected(description, index, found) {
+  _proto.expected = function expected(description, index, found) {
     if (Array.isArray(description)) {
       var last = description.pop();
-      description = description.join(', ') + ' or ' + last;
+      description = description.join(', ') + " or " + last;
     }
 
     var an = /^[aeiou]/.test(description[0]) ? 'an' : 'a';
 
     if (!found) {
-      return this.error('Expected ' + an + ' ' + description + '.', {
+      return this.error("Expected " + an + " " + description + ".", {
         index: index
       });
     }
 
-    return this.error('Expected ' + an + ' ' + description + ', found "' + found + '" instead.', {
+    return this.error("Expected " + an + " " + description + ", found \"" + found + "\" instead.", {
       index: index
     });
   };
 
-  Parser.prototype.parseNamespace = function parseNamespace(namespace) {
-    if (this.options.lossy && typeof namespace === 'string') {
-      var trimmed = namespace.trim();
+  _proto.requiredSpace = function requiredSpace(space) {
+    return this.options.lossy ? ' ' : space;
+  };
 
-      if (!trimmed.length) {
-        return true;
-      }
+  _proto.optionalSpace = function optionalSpace(space) {
+    return this.options.lossy ? '' : space;
+  };
 
-      return trimmed;
+  _proto.lossySpace = function lossySpace(space, required) {
+    if (this.options.lossy) {
+      return required ? ' ' : '';
+    } else {
+      return space;
     }
-
-    return namespace;
   };
 
-  Parser.prototype.parseSpace = function parseSpace(space) {
-    var replacement = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-    return this.options.lossy ? replacement : space;
-  };
-
-  Parser.prototype.parseValue = function parseValue(value) {
-    if (!this.options.lossy || !value || typeof value !== 'string') {
-      return value;
-    }
-
-    return value.trim();
-  };
-
-  Parser.prototype.parseParenthesisToken = function parseParenthesisToken(token) {
+  _proto.parseParenthesisToken = function parseParenthesisToken(token) {
     var content = this.content(token);
 
-    if (!this.options.lossy) {
+    if (token[_tokenize.FIELDS.TYPE] === tokens.space) {
+      return this.requiredSpace(content);
+    } else {
       return content;
     }
-
-    if (token[0] === tokens.space) {
-      return this.parseSpace(content, ' ');
-    }
-
-    return this.parseValue(content);
   };
 
-  Parser.prototype.newNode = function newNode(node, namespace) {
+  _proto.newNode = function newNode(node, namespace) {
     if (namespace) {
-      node.namespace = this.parseNamespace(namespace);
+      if (/^ +$/.test(namespace)) {
+        if (!this.options.lossy) {
+          this.spaces = (this.spaces || '') + namespace;
+        }
+
+        namespace = true;
+      }
+
+      node.namespace = namespace;
+      unescapeProp(node, "namespace");
     }
 
     if (this.spaces) {
@@ -3590,23 +7325,50 @@ var Parser = function () {
     return this.current.append(node);
   };
 
-  Parser.prototype.content = function content() {
-    var token = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.currToken;
-    return this.css.slice(token[5], token[6]);
+  _proto.content = function content(token) {
+    if (token === void 0) {
+      token = this.currToken;
+    }
+
+    return this.css.slice(token[_tokenize.FIELDS.START_POS], token[_tokenize.FIELDS.END_POS]);
+  };
+  /**
+   * returns the index of the next non-whitespace, non-comment token.
+   * returns -1 if no meaningful token is found.
+   */
+
+
+  _proto.locateNextMeaningfulToken = function locateNextMeaningfulToken(startPosition) {
+    if (startPosition === void 0) {
+      startPosition = this.position + 1;
+    }
+
+    var searchPosition = startPosition;
+
+    while (searchPosition < this.tokens.length) {
+      if (WHITESPACE_EQUIV_TOKENS[this.tokens[searchPosition][_tokenize.FIELDS.TYPE]]) {
+        searchPosition++;
+        continue;
+      } else {
+        return searchPosition;
+      }
+    }
+
+    return -1;
   };
 
   _createClass(Parser, [{
-    key: 'currToken',
+    key: "currToken",
     get: function get() {
       return this.tokens[this.position];
     }
   }, {
-    key: 'nextToken',
+    key: "nextToken",
     get: function get() {
       return this.tokens[this.position + 1];
     }
   }, {
-    key: 'prevToken',
+    key: "prevToken",
     get: function get() {
       return this.tokens[this.position - 1];
     }
@@ -3616,15 +7378,14 @@ var Parser = function () {
 }();
 
 exports.default = Parser;
-module.exports = exports['default'];
-},{"dot-prop":"../node_modules/dot-prop/index.js","indexes-of":"../node_modules/indexes-of/index.js","uniq":"../node_modules/uniq/uniq.js","./selectors/root":"../node_modules/postcss-selector-parser/dist/selectors/root.js","./selectors/selector":"../node_modules/postcss-selector-parser/dist/selectors/selector.js","./selectors/className":"../node_modules/postcss-selector-parser/dist/selectors/className.js","./selectors/comment":"../node_modules/postcss-selector-parser/dist/selectors/comment.js","./selectors/id":"../node_modules/postcss-selector-parser/dist/selectors/id.js","./selectors/tag":"../node_modules/postcss-selector-parser/dist/selectors/tag.js","./selectors/string":"../node_modules/postcss-selector-parser/dist/selectors/string.js","./selectors/pseudo":"../node_modules/postcss-selector-parser/dist/selectors/pseudo.js","./selectors/attribute":"../node_modules/postcss-selector-parser/dist/selectors/attribute.js","./selectors/universal":"../node_modules/postcss-selector-parser/dist/selectors/universal.js","./selectors/combinator":"../node_modules/postcss-selector-parser/dist/selectors/combinator.js","./selectors/nesting":"../node_modules/postcss-selector-parser/dist/selectors/nesting.js","./sortAscending":"../node_modules/postcss-selector-parser/dist/sortAscending.js","./tokenize":"../node_modules/postcss-selector-parser/dist/tokenize.js","./tokenTypes":"../node_modules/postcss-selector-parser/dist/tokenTypes.js","./selectors/types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/processor.js":[function(require,module,exports) {
+module.exports = exports.default;
+},{"indexes-of":"../node_modules/indexes-of/index.js","uniq":"../node_modules/uniq/uniq.js","./selectors/root":"../node_modules/postcss-selector-parser/dist/selectors/root.js","./selectors/selector":"../node_modules/postcss-selector-parser/dist/selectors/selector.js","./selectors/className":"../node_modules/postcss-selector-parser/dist/selectors/className.js","./selectors/comment":"../node_modules/postcss-selector-parser/dist/selectors/comment.js","./selectors/id":"../node_modules/postcss-selector-parser/dist/selectors/id.js","./selectors/tag":"../node_modules/postcss-selector-parser/dist/selectors/tag.js","./selectors/string":"../node_modules/postcss-selector-parser/dist/selectors/string.js","./selectors/pseudo":"../node_modules/postcss-selector-parser/dist/selectors/pseudo.js","./selectors/attribute":"../node_modules/postcss-selector-parser/dist/selectors/attribute.js","./selectors/universal":"../node_modules/postcss-selector-parser/dist/selectors/universal.js","./selectors/combinator":"../node_modules/postcss-selector-parser/dist/selectors/combinator.js","./selectors/nesting":"../node_modules/postcss-selector-parser/dist/selectors/nesting.js","./sortAscending":"../node_modules/postcss-selector-parser/dist/sortAscending.js","./tokenize":"../node_modules/postcss-selector-parser/dist/tokenize.js","./tokenTypes":"../node_modules/postcss-selector-parser/dist/tokenTypes.js","./selectors/types":"../node_modules/postcss-selector-parser/dist/selectors/types.js","./util":"../node_modules/postcss-selector-parser/dist/util/index.js"}],"../node_modules/postcss-selector-parser/dist/processor.js":[function(require,module,exports) {
 "use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _parser = require("./parser");
-
-var _parser2 = _interopRequireDefault(_parser);
+var _parser = _interopRequireDefault(require("./parser"));
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -3632,24 +7393,23 @@ function _interopRequireDefault(obj) {
   };
 }
 
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-var Processor = function () {
+var Processor =
+/*#__PURE__*/
+function () {
   function Processor(func, options) {
-    _classCallCheck(this, Processor);
-
     this.func = func || function noop() {};
 
     this.funcRes = null;
     this.options = options;
   }
 
-  Processor.prototype._shouldUpdateSelector = function _shouldUpdateSelector(rule) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var _proto = Processor.prototype;
+
+  _proto._shouldUpdateSelector = function _shouldUpdateSelector(rule, options) {
+    if (options === void 0) {
+      options = {};
+    }
+
     var merged = Object.assign({}, this.options, options);
 
     if (merged.updateSelector === false) {
@@ -3659,8 +7419,11 @@ var Processor = function () {
     }
   };
 
-  Processor.prototype._isLossy = function _isLossy() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  _proto._isLossy = function _isLossy(options) {
+    if (options === void 0) {
+      options = {};
+    }
+
     var merged = Object.assign({}, this.options, options);
 
     if (merged.lossless === false) {
@@ -3670,22 +7433,28 @@ var Processor = function () {
     }
   };
 
-  Processor.prototype._root = function _root(rule) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    var parser = new _parser2.default(rule, this._parseOptions(options));
+  _proto._root = function _root(rule, options) {
+    if (options === void 0) {
+      options = {};
+    }
+
+    var parser = new _parser.default(rule, this._parseOptions(options));
     return parser.root;
   };
 
-  Processor.prototype._parseOptions = function _parseOptions(options) {
+  _proto._parseOptions = function _parseOptions(options) {
     return {
       lossy: this._isLossy(options)
     };
   };
 
-  Processor.prototype._run = function _run(rule) {
+  _proto._run = function _run(rule, options) {
     var _this = this;
 
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    if (options === void 0) {
+      options = {};
+    }
+
     return new Promise(function (resolve, reject) {
       try {
         var root = _this._root(rule, options);
@@ -3711,8 +7480,10 @@ var Processor = function () {
     });
   };
 
-  Processor.prototype._runSync = function _runSync(rule) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  _proto._runSync = function _runSync(rule, options) {
+    if (options === void 0) {
+      options = {};
+    }
 
     var root = this._root(rule, options);
 
@@ -3734,83 +7505,83 @@ var Processor = function () {
       root: root,
       string: string
     };
-  };
+  }
   /**
    * Process rule into a selector AST.
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {Promise<parser.Root>} The AST of the selector after processing it.
    */
+  ;
 
-
-  Processor.prototype.ast = function ast(rule, options) {
+  _proto.ast = function ast(rule, options) {
     return this._run(rule, options).then(function (result) {
       return result.root;
     });
-  };
+  }
   /**
    * Process rule into a selector AST synchronously.
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {parser.Root} The AST of the selector after processing it.
    */
+  ;
 
-
-  Processor.prototype.astSync = function astSync(rule, options) {
+  _proto.astSync = function astSync(rule, options) {
     return this._runSync(rule, options).root;
-  };
+  }
   /**
    * Process a selector into a transformed value asynchronously
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {Promise<any>} The value returned by the processor.
    */
+  ;
 
-
-  Processor.prototype.transform = function transform(rule, options) {
+  _proto.transform = function transform(rule, options) {
     return this._run(rule, options).then(function (result) {
       return result.transform;
     });
-  };
+  }
   /**
    * Process a selector into a transformed value synchronously.
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {any} The value returned by the processor.
    */
+  ;
 
-
-  Processor.prototype.transformSync = function transformSync(rule, options) {
+  _proto.transformSync = function transformSync(rule, options) {
     return this._runSync(rule, options).transform;
-  };
+  }
   /**
    * Process a selector into a new selector string asynchronously.
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {string} the selector after processing.
    */
+  ;
 
-
-  Processor.prototype.process = function process(rule, options) {
+  _proto.process = function process(rule, options) {
     return this._run(rule, options).then(function (result) {
       return result.string || result.root.toString();
     });
-  };
+  }
   /**
    * Process a selector into a new selector string synchronously.
-   * 
+   *
    * @param rule {postcss.Rule | string} The css selector to be processed
    * @param options The options for processing
    * @returns {string} the selector after processing.
    */
+  ;
 
-
-  Processor.prototype.processSync = function processSync(rule, options) {
+  _proto.processSync = function processSync(rule, options) {
     var result = this._runSync(rule, options);
 
     return result.string || result.root.toString();
@@ -3820,60 +7591,36 @@ var Processor = function () {
 }();
 
 exports.default = Processor;
-module.exports = exports["default"];
+module.exports = exports.default;
 },{"./parser":"../node_modules/postcss-selector-parser/dist/parser.js"}],"../node_modules/postcss-selector-parser/dist/selectors/constructors.js":[function(require,module,exports) {
-'use strict';
+"use strict";
 
 exports.__esModule = true;
-exports.universal = exports.tag = exports.string = exports.selector = exports.root = exports.pseudo = exports.nesting = exports.id = exports.comment = exports.combinator = exports.className = exports.attribute = undefined;
+exports.universal = exports.tag = exports.string = exports.selector = exports.root = exports.pseudo = exports.nesting = exports.id = exports.comment = exports.combinator = exports.className = exports.attribute = void 0;
 
-var _attribute = require('./attribute');
+var _attribute = _interopRequireDefault(require("./attribute"));
 
-var _attribute2 = _interopRequireDefault(_attribute);
+var _className = _interopRequireDefault(require("./className"));
 
-var _className = require('./className');
+var _combinator = _interopRequireDefault(require("./combinator"));
 
-var _className2 = _interopRequireDefault(_className);
+var _comment = _interopRequireDefault(require("./comment"));
 
-var _combinator = require('./combinator');
+var _id = _interopRequireDefault(require("./id"));
 
-var _combinator2 = _interopRequireDefault(_combinator);
+var _nesting = _interopRequireDefault(require("./nesting"));
 
-var _comment = require('./comment');
+var _pseudo = _interopRequireDefault(require("./pseudo"));
 
-var _comment2 = _interopRequireDefault(_comment);
+var _root = _interopRequireDefault(require("./root"));
 
-var _id = require('./id');
+var _selector = _interopRequireDefault(require("./selector"));
 
-var _id2 = _interopRequireDefault(_id);
+var _string = _interopRequireDefault(require("./string"));
 
-var _nesting = require('./nesting');
+var _tag = _interopRequireDefault(require("./tag"));
 
-var _nesting2 = _interopRequireDefault(_nesting);
-
-var _pseudo = require('./pseudo');
-
-var _pseudo2 = _interopRequireDefault(_pseudo);
-
-var _root = require('./root');
-
-var _root2 = _interopRequireDefault(_root);
-
-var _selector = require('./selector');
-
-var _selector2 = _interopRequireDefault(_selector);
-
-var _string = require('./string');
-
-var _string2 = _interopRequireDefault(_string);
-
-var _tag = require('./tag');
-
-var _tag2 = _interopRequireDefault(_tag);
-
-var _universal = require('./universal');
-
-var _universal2 = _interopRequireDefault(_universal);
+var _universal = _interopRequireDefault(require("./universal"));
 
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
@@ -3881,99 +7628,128 @@ function _interopRequireDefault(obj) {
   };
 }
 
-var attribute = exports.attribute = function attribute(opts) {
-  return new _attribute2.default(opts);
+var attribute = function attribute(opts) {
+  return new _attribute.default(opts);
 };
 
-var className = exports.className = function className(opts) {
-  return new _className2.default(opts);
+exports.attribute = attribute;
+
+var className = function className(opts) {
+  return new _className.default(opts);
 };
 
-var combinator = exports.combinator = function combinator(opts) {
-  return new _combinator2.default(opts);
+exports.className = className;
+
+var combinator = function combinator(opts) {
+  return new _combinator.default(opts);
 };
 
-var comment = exports.comment = function comment(opts) {
-  return new _comment2.default(opts);
+exports.combinator = combinator;
+
+var comment = function comment(opts) {
+  return new _comment.default(opts);
 };
 
-var id = exports.id = function id(opts) {
-  return new _id2.default(opts);
+exports.comment = comment;
+
+var id = function id(opts) {
+  return new _id.default(opts);
 };
 
-var nesting = exports.nesting = function nesting(opts) {
-  return new _nesting2.default(opts);
+exports.id = id;
+
+var nesting = function nesting(opts) {
+  return new _nesting.default(opts);
 };
 
-var pseudo = exports.pseudo = function pseudo(opts) {
-  return new _pseudo2.default(opts);
+exports.nesting = nesting;
+
+var pseudo = function pseudo(opts) {
+  return new _pseudo.default(opts);
 };
 
-var root = exports.root = function root(opts) {
-  return new _root2.default(opts);
+exports.pseudo = pseudo;
+
+var root = function root(opts) {
+  return new _root.default(opts);
 };
 
-var selector = exports.selector = function selector(opts) {
-  return new _selector2.default(opts);
+exports.root = root;
+
+var selector = function selector(opts) {
+  return new _selector.default(opts);
 };
 
-var string = exports.string = function string(opts) {
-  return new _string2.default(opts);
+exports.selector = selector;
+
+var string = function string(opts) {
+  return new _string.default(opts);
 };
 
-var tag = exports.tag = function tag(opts) {
-  return new _tag2.default(opts);
+exports.string = string;
+
+var tag = function tag(opts) {
+  return new _tag.default(opts);
 };
 
-var universal = exports.universal = function universal(opts) {
-  return new _universal2.default(opts);
+exports.tag = tag;
+
+var universal = function universal(opts) {
+  return new _universal.default(opts);
 };
+
+exports.universal = universal;
 },{"./attribute":"../node_modules/postcss-selector-parser/dist/selectors/attribute.js","./className":"../node_modules/postcss-selector-parser/dist/selectors/className.js","./combinator":"../node_modules/postcss-selector-parser/dist/selectors/combinator.js","./comment":"../node_modules/postcss-selector-parser/dist/selectors/comment.js","./id":"../node_modules/postcss-selector-parser/dist/selectors/id.js","./nesting":"../node_modules/postcss-selector-parser/dist/selectors/nesting.js","./pseudo":"../node_modules/postcss-selector-parser/dist/selectors/pseudo.js","./root":"../node_modules/postcss-selector-parser/dist/selectors/root.js","./selector":"../node_modules/postcss-selector-parser/dist/selectors/selector.js","./string":"../node_modules/postcss-selector-parser/dist/selectors/string.js","./tag":"../node_modules/postcss-selector-parser/dist/selectors/tag.js","./universal":"../node_modules/postcss-selector-parser/dist/selectors/universal.js"}],"../node_modules/postcss-selector-parser/dist/selectors/guards.js":[function(require,module,exports) {
 "use strict";
 
-function _typeof2(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof2 = function (obj) { return typeof obj; }; } else { _typeof2 = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof2(obj); }
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function (obj) { return typeof obj; }; } else { _typeof = function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 exports.__esModule = true;
-exports.isUniversal = exports.isTag = exports.isString = exports.isSelector = exports.isRoot = exports.isPseudo = exports.isNesting = exports.isIdentifier = exports.isComment = exports.isCombinator = exports.isClassName = exports.isAttribute = undefined;
-
-var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
-  return _typeof2(obj);
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : _typeof2(obj);
-};
-
-var _IS_TYPE;
-
 exports.isNode = isNode;
 exports.isPseudoElement = isPseudoElement;
 exports.isPseudoClass = isPseudoClass;
 exports.isContainer = isContainer;
 exports.isNamespace = isNamespace;
+exports.isUniversal = exports.isTag = exports.isString = exports.isSelector = exports.isRoot = exports.isPseudo = exports.isNesting = exports.isIdentifier = exports.isComment = exports.isCombinator = exports.isClassName = exports.isAttribute = void 0;
 
 var _types = require("./types");
+
+var _IS_TYPE;
 
 var IS_TYPE = (_IS_TYPE = {}, _IS_TYPE[_types.ATTRIBUTE] = true, _IS_TYPE[_types.CLASS] = true, _IS_TYPE[_types.COMBINATOR] = true, _IS_TYPE[_types.COMMENT] = true, _IS_TYPE[_types.ID] = true, _IS_TYPE[_types.NESTING] = true, _IS_TYPE[_types.PSEUDO] = true, _IS_TYPE[_types.ROOT] = true, _IS_TYPE[_types.SELECTOR] = true, _IS_TYPE[_types.STRING] = true, _IS_TYPE[_types.TAG] = true, _IS_TYPE[_types.UNIVERSAL] = true, _IS_TYPE);
 
 function isNode(node) {
-  return (typeof node === "undefined" ? "undefined" : _typeof(node)) === "object" && IS_TYPE[node.type];
+  return _typeof(node) === "object" && IS_TYPE[node.type];
 }
 
 function isNodeType(type, node) {
   return isNode(node) && node.type === type;
 }
 
-var isAttribute = exports.isAttribute = isNodeType.bind(null, _types.ATTRIBUTE);
-var isClassName = exports.isClassName = isNodeType.bind(null, _types.CLASS);
-var isCombinator = exports.isCombinator = isNodeType.bind(null, _types.COMBINATOR);
-var isComment = exports.isComment = isNodeType.bind(null, _types.COMMENT);
-var isIdentifier = exports.isIdentifier = isNodeType.bind(null, _types.ID);
-var isNesting = exports.isNesting = isNodeType.bind(null, _types.NESTING);
-var isPseudo = exports.isPseudo = isNodeType.bind(null, _types.PSEUDO);
-var isRoot = exports.isRoot = isNodeType.bind(null, _types.ROOT);
-var isSelector = exports.isSelector = isNodeType.bind(null, _types.SELECTOR);
-var isString = exports.isString = isNodeType.bind(null, _types.STRING);
-var isTag = exports.isTag = isNodeType.bind(null, _types.TAG);
-var isUniversal = exports.isUniversal = isNodeType.bind(null, _types.UNIVERSAL);
+var isAttribute = isNodeType.bind(null, _types.ATTRIBUTE);
+exports.isAttribute = isAttribute;
+var isClassName = isNodeType.bind(null, _types.CLASS);
+exports.isClassName = isClassName;
+var isCombinator = isNodeType.bind(null, _types.COMBINATOR);
+exports.isCombinator = isCombinator;
+var isComment = isNodeType.bind(null, _types.COMMENT);
+exports.isComment = isComment;
+var isIdentifier = isNodeType.bind(null, _types.ID);
+exports.isIdentifier = isIdentifier;
+var isNesting = isNodeType.bind(null, _types.NESTING);
+exports.isNesting = isNesting;
+var isPseudo = isNodeType.bind(null, _types.PSEUDO);
+exports.isPseudo = isPseudo;
+var isRoot = isNodeType.bind(null, _types.ROOT);
+exports.isRoot = isRoot;
+var isSelector = isNodeType.bind(null, _types.SELECTOR);
+exports.isSelector = isSelector;
+var isString = isNodeType.bind(null, _types.STRING);
+exports.isString = isString;
+var isTag = isNodeType.bind(null, _types.TAG);
+exports.isTag = isTag;
+var isUniversal = isNodeType.bind(null, _types.UNIVERSAL);
+exports.isUniversal = isUniversal;
 
 function isPseudoElement(node) {
   return isPseudo(node) && node.value && (node.value.startsWith("::") || node.value === ":before" || node.value === ":after");
@@ -3988,7 +7764,7 @@ function isContainer(node) {
 }
 
 function isNamespace(node) {
-  return isClassName(node) || isAttribute(node) || isTag(node);
+  return isAttribute(node) || isTag(node);
 }
 },{"./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js"}],"../node_modules/postcss-selector-parser/dist/selectors/index.js":[function(require,module,exports) {
 "use strict";
@@ -3999,49 +7775,31 @@ var _types = require("./types");
 
 Object.keys(_types).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _types[key];
-    }
-  });
+  exports[key] = _types[key];
 });
 
 var _constructors = require("./constructors");
 
 Object.keys(_constructors).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _constructors[key];
-    }
-  });
+  exports[key] = _constructors[key];
 });
 
 var _guards = require("./guards");
 
 Object.keys(_guards).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _guards[key];
-    }
-  });
+  exports[key] = _guards[key];
 });
 },{"./types":"../node_modules/postcss-selector-parser/dist/selectors/types.js","./constructors":"../node_modules/postcss-selector-parser/dist/selectors/constructors.js","./guards":"../node_modules/postcss-selector-parser/dist/selectors/guards.js"}],"../node_modules/postcss-selector-parser/dist/index.js":[function(require,module,exports) {
-'use strict';
+"use strict";
 
 exports.__esModule = true;
+exports.default = void 0;
 
-var _processor = require('./processor');
+var _processor = _interopRequireDefault(require("./processor"));
 
-var _processor2 = _interopRequireDefault(_processor);
-
-var _selectors = require('./selectors');
-
-var selectors = _interopRequireWildcard(_selectors);
+var selectors = _interopRequireWildcard(require("./selectors"));
 
 function _interopRequireWildcard(obj) {
   if (obj && obj.__esModule) {
@@ -4051,7 +7809,15 @@ function _interopRequireWildcard(obj) {
 
     if (obj != null) {
       for (var key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {};
+
+          if (desc.get || desc.set) {
+            Object.defineProperty(newObj, key, desc);
+          } else {
+            newObj[key] = obj[key];
+          }
+        }
       }
     }
 
@@ -4067,13 +7833,14 @@ function _interopRequireDefault(obj) {
 }
 
 var parser = function parser(processor) {
-  return new _processor2.default(processor);
+  return new _processor.default(processor);
 };
 
 Object.assign(parser, selectors);
 delete parser.__esModule;
-exports.default = parser;
-module.exports = exports['default'];
+var _default = parser;
+exports.default = _default;
+module.exports = exports.default;
 },{"./processor":"../node_modules/postcss-selector-parser/dist/processor.js","./selectors":"../node_modules/postcss-selector-parser/dist/selectors/index.js"}],"js/components/Icon/Icon.js":[function(require,module,exports) {
 "use strict";
 
@@ -8949,7 +12716,6 @@ function (_Component) {
     key: "setOdessaTips",
     value: function setOdessaTips() {
       var temp = Math.round(this.props.todayData.main.temp);
-      console.log(temp);
 
       if (temp >= 25) {
         return 'Это вы селёдку на привозе купили, или то вам так жарко?';
@@ -9021,7 +12787,7 @@ function (_Component) {
   }, {
     key: "render",
     value: function render() {
-      console.log(this.props.fiveDayData, 'fivedayData');
+      console.log(this.props, 'fivedayData');
       return [{
         tag: 'div',
         classList: ['weather-forecast'],
@@ -9109,37 +12875,37 @@ function (_Component) {
           children: [{
             tag: _WeatherForecastItem.WeatherForecastItem,
             props: {
-              data: this.props.fiveDayData.list[7],
-              temp: this.props.fiveDayData.list[7].main.temp,
-              src: this.chooseIcons(7)
+              data: this.props.fiveDayData.list[3],
+              temp: this.props.fiveDayData.list[3].main.temp,
+              src: this.chooseIcons(3)
             }
           }, {
             tag: _WeatherForecastItem.WeatherForecastItem,
             props: {
-              data: this.props.fiveDayData.list[15],
-              temp: this.props.fiveDayData.list[15].main.temp,
-              src: this.chooseIcons(15)
+              data: this.props.fiveDayData.list[11],
+              temp: this.props.fiveDayData.list[11].main.temp,
+              src: this.chooseIcons(11)
             }
           }, {
             tag: _WeatherForecastItem.WeatherForecastItem,
             props: {
-              data: this.props.fiveDayData.list[23],
-              temp: this.props.fiveDayData.list[23].main.temp,
-              src: this.chooseIcons(23)
+              data: this.props.fiveDayData.list[19],
+              temp: this.props.fiveDayData.list[19].main.temp,
+              src: this.chooseIcons(19)
             }
           }, {
             tag: _WeatherForecastItem.WeatherForecastItem,
             props: {
-              data: this.props.fiveDayData.list[31],
-              temp: this.props.fiveDayData.list[31].main.temp,
-              src: this.chooseIcons(31)
+              data: this.props.fiveDayData.list[27],
+              temp: this.props.fiveDayData.list[27].main.temp,
+              src: this.chooseIcons(27)
             }
           }, {
             tag: _WeatherForecastItem.WeatherForecastItem,
             props: {
-              data: this.props.fiveDayData.list[38],
-              temp: this.props.fiveDayData.list[38].main.temp,
-              src: this.chooseIcons(38)
+              data: this.props.fiveDayData.list[35],
+              temp: this.props.fiveDayData.list[35].main.temp,
+              src: this.chooseIcons(35)
             }
           }]
         }]
@@ -9505,7 +13271,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56173" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59709" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

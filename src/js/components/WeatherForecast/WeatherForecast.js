@@ -20,7 +20,6 @@ export default class WeatherForecast extends Component {
   setOdessaTips() {
     const temp = Math.round(this.props.todayData.main.temp);
 
-    console.log(temp);
 
     if (temp >= 25) {
       return 'Это вы селёдку на привозе купили, или то вам так жарко?';
@@ -94,7 +93,7 @@ export default class WeatherForecast extends Component {
   }
 
   render() {
-    console.log(this.props.fiveDayData, 'fivedayData');
+    console.log(this.props, 'fivedayData');
     return [
       {
         tag: 'div',
@@ -219,41 +218,41 @@ export default class WeatherForecast extends Component {
               {
                 tag: WeatherForecastItem,
                 props: {
-                  data: this.props.fiveDayData.list[7],
-                  temp: this.props.fiveDayData.list[7].main.temp,
-                  src: this.chooseIcons(7),
+                  data: this.props.fiveDayData.list[3],
+                  temp: this.props.fiveDayData.list[3].main.temp,
+                  src: this.chooseIcons(3),
                 },
               },
               {
                 tag: WeatherForecastItem,
                 props: {
-                  data: this.props.fiveDayData.list[15],
-                  temp: this.props.fiveDayData.list[15].main.temp,
-                  src: this.chooseIcons(15),
+                  data: this.props.fiveDayData.list[11],
+                  temp: this.props.fiveDayData.list[11].main.temp,
+                  src: this.chooseIcons(11),
                 },
               },
               {
                 tag: WeatherForecastItem,
                 props: {
-                  data: this.props.fiveDayData.list[23],
-                  temp: this.props.fiveDayData.list[23].main.temp,
-                  src: this.chooseIcons(23),
+                  data: this.props.fiveDayData.list[19],
+                  temp: this.props.fiveDayData.list[19].main.temp,
+                  src: this.chooseIcons(19),
                 },
               },
               {
                 tag: WeatherForecastItem,
                 props: {
-                  data: this.props.fiveDayData.list[31],
-                  temp: this.props.fiveDayData.list[31].main.temp,
-                  src: this.chooseIcons(31),
+                  data: this.props.fiveDayData.list[27],
+                  temp: this.props.fiveDayData.list[27].main.temp,
+                  src: this.chooseIcons(27),
                 },
               },
               {
                 tag: WeatherForecastItem,
                 props: {
-                  data: this.props.fiveDayData.list[38],
-                  temp: this.props.fiveDayData.list[38].main.temp,
-                  src: this.chooseIcons(38),
+                  data: this.props.fiveDayData.list[35],
+                  temp: this.props.fiveDayData.list[35].main.temp,
+                  src: this.chooseIcons(35),
                 },
               },
             ],
