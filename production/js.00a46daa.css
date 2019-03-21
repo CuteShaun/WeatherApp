@@ -213,16 +213,20 @@ body {
 
 .weather-forecast-item-box {
   display: flex; }
-  .weather-forecast-item-box .weather-forecast-item:nth-child(1) h5 {
-    color: hotpink; }
+  .weather-forecast-item-box .weather-forecast-item:nth-child(1) {
+    border-radius: 0 0 0 3px; }
+    .weather-forecast-item-box .weather-forecast-item:nth-child(1) h5 {
+      color: hotpink; }
   .weather-forecast-item-box .weather-forecast-item:nth-child(2) h5 {
     color: deepskyblue; }
   .weather-forecast-item-box .weather-forecast-item:nth-child(3) h5 {
     color: green; }
   .weather-forecast-item-box .weather-forecast-item:nth-child(4) h5 {
     color: orangered; }
-  .weather-forecast-item-box .weather-forecast-item:nth-child(5) h5 {
-    color: darkorange; }
+  .weather-forecast-item-box .weather-forecast-item:nth-child(5) {
+    border-radius: 0 0 3px 0; }
+    .weather-forecast-item-box .weather-forecast-item:nth-child(5) h5 {
+      color: darkorange; }
 
 .weather-forecast-info {
   display: flex;

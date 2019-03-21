@@ -12822,7 +12822,7 @@ function (_Component) {
               children: [{
                 tag: 'h1',
                 classList: ['weather-forecast-info__city-name'],
-                content: this.props.todayData.name,
+                content: "".concat(this.props.todayData.name, ", "),
                 children: [{
                   tag: 'span',
                   classList: ['weather-forecast-info__country-name'],
@@ -13317,7 +13317,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59764" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60656" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
