@@ -10,6 +10,7 @@ h2 {
 }
 
 html {
+  height: 100%;
   font-size: 62.5%;
 
   @media (max-width: 850px) {
@@ -22,13 +23,14 @@ html {
 }
 
 body {
+  height: 100%;
   margin: 0;
   font-family: 'Pangolin', cursive;
   font-size: 1.6rem;
 }
 
 .wrapper {
-  height: 100vh;
+  height: 100%;
   padding-top: 50px;
   background-image: linear-gradient(
       to right bottom,
