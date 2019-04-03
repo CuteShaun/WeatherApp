@@ -10,7 +10,7 @@ export default class SearchForm extends Component {
   }
 
   init() {
-    ['updateMyself', 'handleChange'].forEach(
+    ['updateMyself', 'onSubmit'].forEach(
       methodName => (this[methodName] = this[methodName].bind(this)),
     );
   }
@@ -22,8 +22,8 @@ export default class SearchForm extends Component {
   onSubmit(e) {
     e.preventDefault();
     e.stopPropagation();
-    const inputValue = document.getElementById('city-input').value;
-    AppState.update('USERINPUT', inputValue);
+    const inputValue = document.getElementById('city-input');
+    AppState.update('USERINPUT', 'gg');
   }
 
   render() {
