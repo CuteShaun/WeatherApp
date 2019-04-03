@@ -3,6 +3,9 @@ import { Temperature } from '../Temperature';
 import { Wind } from '../Wind';
 import { Icon } from '../Icon';
 import { WeatherForecastItem } from '../WeatherForecastItem';
+import AppState from '../../services/AppState';
+
+import WeatherDataService from '../../services/WeatherDataService';
 
 import rain from '../../../img/rain.png';
 import clearsky from '../../../img/clearsky.png';
@@ -13,25 +16,71 @@ import haze from '../../../img/haze.png';
 import fog from '../../../img/fog.png';
 
 export default class WeatherForecast extends Component {
-  constructor(
-    host,
-    props = {
-      todayData: {
-        sys: {
-          country: '',
-        },
-      },
-    },
-  ) {
+  constructor(host, props) {
     super(host, props);
+
+    this.geoLocationData();
+
+    AppState.watch('USERINPUT', this.updateMyself);
+    AppState.watch('UNIT', this.computeUnit);
+    // AppState.watch('SHOWFAVOURITE', this.updateMyself);
+    // AppState.watch('SHOWFROMHISTORY', this.updateMyself);
+  }
+
+  init() {
+    ['updateMyself', 'geoLocationData', 'toggleUnit', 'computeUnit'].forEach(
+      methodName => (this[methodName] = this[methodName].bind(this)),
+    );
+    this.apiData = null;
+    this.state = {
+      weatherType: 'weather',
+      unit: 'metric',
+      city: null,
+      celsium: 'C°',
+      windSpeed: 'm/s',
+    };
+  }
+
+  geoLocationData() {
+    WeatherDataService.getWeatherByGeo(this.state.weatherType, this.state.unit).then((data) => {
+      this.apiData = data;
+      this.state.city = this.apiData.name;
+      this.updateState(this.apiData);
+    });
+  }
+
+  computeUnit(updatedUnit) {
+    WeatherDataService.getCurrentWeather(updatedUnit.city, updatedUnit.unit).then((data) => {
+      this.apiData = data;
+      this.updateState(updatedUnit);
+    });
+  }
+
+  updateMyself(userinput) {
+    console.log(userinput, 'userinput');
+
+    WeatherDataService.getCurrentWeather(userinput, this.state.unit).then((data) => {
+      this.apiData = data;
+      this.state.city = this.apiData.name;
+      this.updateState(this.apiData);
+    });
+  }
+
+  toggleUnit() {
+    AppState.update('UNIT', {
+      city: this.state.city,
+      unit: this.state.unit === 'imperial' ? 'metric' : 'imperial',
+      celsium: this.state.celsium === 'F°' ? 'C°' : 'F°',
+      windSpeed: this.state.windSpeed === 'mph' ? 'm/s' : 'mph',
+    });
   }
 
   setOdessaTips() {
-    if (this.props.fiveDayData === undefined) {
+    if (this.apiData === undefined) {
       return '';
     }
 
-    const temp = Math.round(this.props.todayData.main.temp);
+    const temp = Math.round(this.apiData.main.temp);
 
     if (temp >= 25) {
       return 'Это вы селёдку на привозе купили, или то вам так жарко?';
@@ -64,11 +113,11 @@ export default class WeatherForecast extends Component {
     let description;
 
     if (index) {
-      description = this.props.fiveDayData.list[index].weather[0].main;
-    } else if (this.props.fiveDayData === undefined) {
+      description = this.apiData.list[index].weather[0].main;
+    } else if (this.apiData === undefined) {
       description = '';
     } else {
-      description = this.props.todayData.weather[0].main;
+      description = this.apiData.weather[0].main;
     }
 
     if (description === 'Clouds') {
@@ -103,173 +152,174 @@ export default class WeatherForecast extends Component {
   }
 
   render() {
-    console.log(this.props, 'fivedayData');
-
-    return [
-      {
-        tag: 'div',
-        classList: ['weather-forecast'],
-        eventHandlers: this.props.todayData.eventHandlers,
-        attributes: [
-          {
-            name: 'id',
-            value: 'current-weather',
-          },
-        ],
-        children: [
-          {
-            tag: 'div',
-            classList: 'weather-forecast-item-wrapper',
-            children: [
-              {
-                tag: 'div',
-                classList: ['weather-forecast-info'],
-                children: [
-                  {
-                    tag: 'div',
-                    classList: ['weather-forecast-info__item'],
-                    children: [
-                      {
-                        tag: 'h1',
-                        classList: ['weather-forecast-info__city-name'],
-                        content: `${this.props.todayData.name}, `,
-                        children: [
-                          {
-                            tag: 'span',
-                            classList: ['weather-forecast-info__country-name'],
-                            content: this.props.todayData.sys.country,
-                          },
-                        ],
-                      },
-                      {
-                        tag: 'div',
-                        classList: ['weather-forecast-info__icon-wrapper'],
-                        children: [
-                          {
-                            tag: Icon,
-                            props: {
-                              class: 'weather-forecast-info__icon',
-                              src: this.chooseIcons(),
-                              alt: 'weather-icon',
+    if (this.apiData) {
+      return [
+        {
+          tag: 'div',
+          classList: ['weather-forecast'],
+          eventHandlers: this.props.todayData.eventHandlers,
+          attributes: [
+            {
+              name: 'id',
+              value: 'current-weather',
+            },
+          ],
+          children: [
+            {
+              tag: 'div',
+              classList: 'weather-forecast-item-wrapper',
+              children: [
+                {
+                  tag: 'div',
+                  classList: ['weather-forecast-info'],
+                  children: [
+                    {
+                      tag: 'div',
+                      classList: ['weather-forecast-info__item'],
+                      children: [
+                        {
+                          tag: 'h1',
+                          classList: ['weather-forecast-info__city-name'],
+                          content: this.apiData.name,
+                          children: [
+                            {
+                              tag: 'span',
+                              classList: ['weather-forecast-info__country-name'],
+                              content: `, ${this.apiData.sys.country}`,
                             },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    tag: 'div',
-                    classList: ['weather-forecast-info__item'],
-                    children: [
-                      {
-                        tag: 'h4',
-                        classList: ['weather-forecast-info__tips'],
-                        content: this.setOdessaTips(),
-                      },
-                    ],
-                  },
-                ],
-              },
-              {
-                tag: 'div',
-                classList: ['weather-forecast-add-info'],
-                children: [
-                  {
-                    tag: 'h2',
-                    classList: ['weather-forecast-add-info__temp'],
-                    children: [
-                      {
-                        tag: Temperature,
-                        props: {
-                          temperature:
-                            `${Math.round(this.props.todayData.main.temp)}&deg;`
-                            + '<span class="units"> C</span>',
+                          ],
                         },
-                      },
-                    ],
-                  },
-
-                  {
-                    tag: 'div',
-                    classList: ['weather-forecast-add-info__wrapper'],
-                    children: [
-                      {
-                        tag: 'div',
-                        classList: ['weather-forecast-add-info__wind'],
-                        children: [
-                          {
-                            tag: Wind,
-                            props: {
-                              speed: `${Math.round(this.props.todayData.wind.speed)}km/h`,
+                        {
+                          tag: 'div',
+                          classList: ['weather-forecast-info__icon-wrapper'],
+                          children: [
+                            {
+                              tag: Icon,
+                              props: {
+                                class: 'weather-forecast-info__icon',
+                                src: this.chooseIcons(),
+                                alt: 'weather-icon',
+                              },
                             },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      tag: 'div',
+                      classList: ['weather-forecast-info__item'],
+                      children: [
+                        {
+                          tag: 'h4',
+                          classList: ['weather-forecast-info__tips'],
+                          content: this.setOdessaTips(),
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  tag: 'div',
+                  classList: ['weather-forecast-add-info'],
+                  children: [
+                    {
+                      tag: 'h2',
+                      classList: ['weather-forecast-add-info__temp'],
+                      children: [
+                        {
+                          tag: Temperature,
+                          props: {
+                            temperature: `<span class="units">${Math.round(
+                              this.apiData.main.temp,
+                            )} ${this.state.celsium}</span>`,
                           },
-                        ],
-                      },
-                      {
-                        tag: 'div',
-                        classList: ['weather-forecast-add-info__humadity'],
-                        children: [
-                          {
-                            tag: 'div',
-                            content: `${this.props.todayData.main.humidity}`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
+                        },
+                      ],
+                    },
 
-          {
-            tag: 'div',
-            classList: ['weather-forecast-item-box'],
-            children: [
-              {
-                tag: WeatherForecastItem,
-                props: {
-                  data: this.props.fiveDayData.list[3],
-                  temp: this.props.fiveDayData.list[3].main.temp,
-                  src: this.chooseIcons(3),
+                    {
+                      tag: 'div',
+                      classList: ['weather-forecast-add-info__wrapper'],
+                      children: [
+                        {
+                          tag: 'div',
+                          classList: ['weather-forecast-add-info__wind'],
+                          children: [
+                            {
+                              tag: Wind,
+                              props: {
+                                speed: `${this.apiData.wind.speed} ${this.state.windSpeed}`,
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          tag: 'div',
+                          classList: ['weather-forecast-add-info__humadity'],
+                          children: [
+                            {
+                              tag: 'div',
+                              content: `${this.apiData.main.humidity}`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
                 },
-              },
-              {
-                tag: WeatherForecastItem,
-                props: {
-                  data: this.props.fiveDayData.list[11],
-                  temp: this.props.fiveDayData.list[11].main.temp,
-                  src: this.chooseIcons(11),
-                },
-              },
-              {
-                tag: WeatherForecastItem,
-                props: {
-                  data: this.props.fiveDayData.list[19],
-                  temp: this.props.fiveDayData.list[19].main.temp,
-                  src: this.chooseIcons(19),
-                },
-              },
-              {
-                tag: WeatherForecastItem,
-                props: {
-                  data: this.props.fiveDayData.list[27],
-                  temp: this.props.fiveDayData.list[27].main.temp,
-                  src: this.chooseIcons(27),
-                },
-              },
-              {
-                tag: WeatherForecastItem,
-                props: {
-                  data: this.props.fiveDayData.list[35],
-                  temp: this.props.fiveDayData.list[35].main.temp,
-                  src: this.chooseIcons(35),
-                },
-              },
-            ],
-          },
-        ],
-      },
-    ];
+              ],
+            },
+
+            // {
+            //   tag: 'div',
+            //   classList: ['weather-forecast-item-box'],
+            //   children: [
+            //     {
+            //       tag: WeatherForecastItem,
+            //       props: {
+            //         data: '3',
+            //         temp: '3',
+            //         src: '3',
+            //       },
+            //     },
+            //     {
+            //       tag: WeatherForecastItem,
+            //       props: {
+            //         data: '11',
+            //         temp: '11',
+            //         src: '11',
+            //       },
+            //     },
+            //     {
+            //       tag: WeatherForecastItem,
+            //       props: {
+            //         data: '19',
+            //         temp: '19',
+            //         src: '19',
+            //       },
+            //     },
+            //     {
+            //       tag: WeatherForecastItem,
+            //       props: {
+            //         data: '27',
+            //         temp: '27',
+            //         src: '27',
+            //       },
+            //     },
+            //     {
+            //       tag: WeatherForecastItem,
+            //       props: {
+            //         data: '35',
+            //         temp: '35',
+            //         src: '35',
+            //       },
+            //     },
+            //   ],
+            // },
+          ],
+        },
+      ];
+    }
+    return [''];
   }
 }

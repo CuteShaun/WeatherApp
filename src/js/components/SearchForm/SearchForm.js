@@ -1,17 +1,38 @@
 import Component from '../../framework/Component';
+import googleAutocomplete from '../../googlePlaces';
+import AppState from '../../Services/AppState';
+
+// google.maps.event.addDomListener(window, 'load', googleAutocomplete);
 
 export default class SearchForm extends Component {
   constructor(host, props) {
     super(host, props);
   }
 
+  init() {
+    ['updateMyself', 'handleChange'].forEach(
+      methodName => (this[methodName] = this[methodName].bind(this)),
+    );
+  }
+
+  updateMyself(newState) {
+    this.updateState(newState);
+  }
+
+  onSubmit(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const inputValue = document.getElementById('city-input').value;
+    AppState.update('USERINPUT', inputValue);
+  }
+
   render() {
     return [
       {
         tag: 'form',
-        eventHandlers: this.props.eventHandlers,
+        eventHandlers: { submit: this.onSubmit },
         classList: ['forecast-form'],
-        attributes: this.props.attributes,
+        attributes: [],
         children: [
           {
             tag: 'input',
