@@ -6,7 +6,6 @@ export default class Temperature extends Component {
   }
 
   render() {
-    console.log(this.props.temperature, 'this.props.temperature');
     return `${this.props.temperature}`;
   }
 }

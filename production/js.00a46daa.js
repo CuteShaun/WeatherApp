@@ -208,33 +208,33 @@ function () {
 
     this.host = host;
     this.props = props;
-    this.beforeRender();
+    this.init();
 
     this._render();
   }
 
   _createClass(Component, [{
-    key: "beforeRender",
-    value: function beforeRender() {} // afterRender() {}
+    key: "init",
+    value: function init() {}
+  }, {
+    key: "updateState",
+    value: function updateState(stateDelta) {
+      this.state = Object.assign({}, this.state, stateDelta);
 
+      this._render();
+    }
   }, {
     key: "_render",
-    value: function _render(data) {
+    value: function _render() {
       var _this = this;
 
-      this.host.innerHTML = "";
-      var content;
-
-      if (data === undefined) {
-        content = this.render("");
-      }
-
-      content = this.render(data);
+      this.host.innerHTML = '';
+      var content = this.render();
 
       if (!Array.isArray(content)) {
         content = [content];
-        this.host.innerHTML = content;
-      }
+      } // console.log(content);
+
 
       content.map(function (item) {
         return _this._vDomPrototypeElementToHtmlElement(item);
@@ -248,7 +248,7 @@ function () {
   }, {
     key: "render",
     value: function render() {
-      return "OMG! They wanna see me!!!!!! Aaaaaa";
+      return 'OMG! They wanna see me!!!!!! Aaaaaa';
     }
     /**
      *
@@ -261,75 +261,86 @@ function () {
     value: function _vDomPrototypeElementToHtmlElement(element) {
       var _this2 = this;
 
-      if (typeof element === "string") {
-        var htmlElement = document.createDocumentFragment(); // TODO: textNode
+      if (typeof element === 'string') {
+        var container;
+        var containsHtmlTags = /[<>&]/.test(element);
 
-        htmlElement.innerHTML = element;
-        return htmlElement;
-      } else {
-        if (element.tag) {
-          if (typeof element.tag === "function") {
-            var container = document.createDocumentFragment();
-            new element.tag(container, element.props);
-
-            if (_toConsumableArray(container.children).length === 0) {
-              container = document.createElement("div");
-              new element.tag(container, element.props);
-            }
-
-            return container;
-          } else {
-            // string
-            var _container = document.createElement(element.tag);
-
-            if (element.content) {
-              _container.innerHTML = element.content;
-            } // ensure following element properties are Array
-
-
-            ["classList", "attributes", "children"].forEach(function (item) {
-              if (element[item] && !Array.isArray(element[item])) {
-                element[item] = [element[item]];
-              }
-            });
-
-            if (element.classList) {
-              var _container$classList;
-
-              (_container$classList = _container.classList).add.apply(_container$classList, _toConsumableArray(element.classList));
-            }
-
-            if (element.attributes) {
-              element.attributes.forEach(function (attributeSpec) {
-                if (attributeSpec.name === "required") {
-                  _container.setAttribute(attributeSpec.name, "");
-                } else {
-                  _container.setAttribute(attributeSpec.name, attributeSpec.value);
-                }
-              });
-            }
-
-            if (element.eventHandlers) {
-              element.eventHandlers.forEach(function (eventHandlersSpec) {
-                _container.addEventListener(eventHandlersSpec.eventType, eventHandlersSpec.handler);
-              });
-            } // process children
-
-
-            if (element.children) {
-              element.children.forEach(function (el) {
-                var htmlElement = _this2._vDomPrototypeElementToHtmlElement(el);
-
-                _container.appendChild(htmlElement);
-              });
-            }
-
-            return _container;
-          }
+        if (containsHtmlTags) {
+          container = document.createElement('div');
+          container.innerHTML = element;
+        } else {
+          container = document.createTextNode(element);
         }
 
-        return element;
+        return container;
       }
+
+      if (element.tag) {
+        if (typeof element.tag === 'function') {
+          var _container2 = document.createElement('div');
+
+          if (element.classList) {
+            var _container2$classList;
+
+            (_container2$classList = _container2.classList).add.apply(_container2$classList, _toConsumableArray(element.classList));
+          }
+
+          if (element.attributes) {
+            element.attributes.forEach(function (attributeSpec) {
+              _container2.setAttribute(attributeSpec.name, attributeSpec.value);
+            });
+          }
+
+          new element.tag(_container2, element.props);
+          return _container2;
+        } // string
+
+
+        var _container = document.createElement(element.tag);
+
+        if (element.content !== undefined) {
+          _container.innerHTML = element.content;
+        } // ensure following element properties are Array
+
+
+        ['classList', 'attributes', 'children'].forEach(function (item) {
+          if (element[item] && !Array.isArray(element[item])) {
+            element[item] = [element[item]];
+          }
+        });
+
+        if (element.classList) {
+          var _container$classList;
+
+          (_container$classList = _container.classList).add.apply(_container$classList, _toConsumableArray(element.classList));
+        }
+
+        if (element.attributes) {
+          element.attributes.forEach(function (attributeSpec) {
+            _container.setAttribute(attributeSpec.name, attributeSpec.value);
+          });
+        } // process eventHandlers
+
+
+        if (element.eventHandlers) {
+          Object.keys(element.eventHandlers).forEach(function (eventType) {
+            _container.addEventListener(eventType, element.eventHandlers[eventType]);
+          });
+        } // process children
+
+
+        if (element.children) {
+          element.children.forEach(function (el) {
+            var htmlElement = _this2._vDomPrototypeElementToHtmlElement(el);
+
+            _container.appendChild(htmlElement);
+          });
+        }
+
+        return _container;
+      }
+
+      return element;
     }
   }]);
 
@@ -449,7 +460,7 @@ function (_Component) {
   _createClass(Wind, [{
     key: "render",
     value: function render() {
-      return this.props.speed + "";
+      return "".concat(this.props.speed);
     }
   }]);
 
@@ -12583,6 +12594,7 @@ function (_Component) {
   }, {
     key: "render",
     value: function render() {
+      // console.log(this.props, 'this.props');
       return [{
         tag: 'div',
         classList: ['weather-forecast-item'],
@@ -12597,7 +12609,7 @@ function (_Component) {
             tag: _Temperature.Temperature,
             classList: ['weather-forecast-item__dat'],
             props: {
-              temperature: Math.round(this.props.temp) + '&deg;' + 'c'
+              temperature: "".concat(Math.round(this.props.temp)).concat(this.props.unit)
             }
           }, {
             tag: 'img',
@@ -12635,7 +12647,136 @@ Object.defineProperty(exports, "WeatherForecastItem", {
 var _WeatherForecastItem = _interopRequireDefault(require("./WeatherForecastItem"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./WeatherForecastItem":"js/components/WeatherForecastItem/WeatherForecastItem.js"}],"img/rain.png":[function(require,module,exports) {
+},{"./WeatherForecastItem":"js/components/WeatherForecastItem/WeatherForecastItem.js"}],"js/services/AppState.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var AppState =
+/*#__PURE__*/
+function () {
+  function AppState() {
+    _classCallCheck(this, AppState);
+
+    this.watchers = {// 'ENTITY': [ watcher1, watcher2 ],
+    };
+  }
+
+  _createClass(AppState, [{
+    key: "watch",
+    value: function watch(entity, watcher) {
+      if (this.watchers[entity]) {
+        this.watchers[entity].push(watcher);
+      } else {
+        this.watchers[entity] = [watcher];
+      }
+    }
+  }, {
+    key: "update",
+    value: function update(entity, newValue) {
+      this.watchers[entity] && this.watchers[entity].forEach(function (watcher) {
+        return watcher(newValue);
+      });
+    }
+  }]);
+
+  return AppState;
+}();
+
+var _default = new AppState();
+
+exports.default = _default;
+},{}],"js/services/WeatherDataService.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var WeatherDataService =
+/*#__PURE__*/
+function () {
+  function WeatherDataService() {
+    _classCallCheck(this, WeatherDataService);
+
+    this.APIKEY = 'd5f2fdfdab2f973dc4e4e3aa87a6ccfb';
+  }
+
+  _createClass(WeatherDataService, [{
+    key: "getWeatherByGeo",
+    value: function getWeatherByGeo(unit) {
+      var _this = this;
+
+      var getGeoLocation = function getGeoLocation() {
+        return new Promise(function (resolve, reject) {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+      };
+
+      var getWeatherByPosition = function getWeatherByPosition(position) {
+        var longitude = position.coords.longitude;
+        var latitude = position.coords.latitude;
+        var api = ["https://api.openweathermap.org/data/2.5/weather?lat=".concat(latitude, "&lon=").concat(longitude, "&units=").concat(unit, "&appid=").concat(_this.APIKEY), "https://api.openweathermap.org/data/2.5/forecast?lat=".concat(latitude, "&lon=").concat(longitude, "&units=").concat(unit, "&appid=").concat(_this.APIKEY)];
+        var promises = api.map(function (url) {
+          return fetch(url).then(function (response) {
+            if (response.ok) {
+              return response.json();
+            }
+
+            if (response.status === 404) {
+              console.log('Ooops, nothing found');
+            }
+          });
+        });
+        return Promise.all(promises);
+      };
+
+      return getGeoLocation().then(getWeatherByPosition).then(function (result) {
+        return result;
+      });
+    }
+  }, {
+    key: "getCurrentWeather",
+    value: function getCurrentWeather(userInput, unit) {
+      this.api = ["https://api.openweathermap.org/data/2.5/weather?q=".concat(userInput, "&units=").concat(unit, "&appid=").concat(this.APIKEY), "https://api.openweathermap.org/data/2.5/forecast?q=".concat(userInput, "&units=").concat(unit, "&appid=").concat(this.APIKEY)];
+      var promises = this.api.map(function (url) {
+        return fetch(url).then(function (response) {
+          if (response.ok) {
+            return response.json();
+          }
+
+          if (response.status === 404) {
+            console.log('Ooops, nothing found');
+          }
+        });
+      });
+      return Promise.all(promises);
+    }
+  }]);
+
+  return WeatherDataService;
+}();
+
+var _default = new WeatherDataService();
+
+exports.default = _default;
+},{}],"img/rain.png":[function(require,module,exports) {
 module.exports = "rain.536e76f6.png";
 },{}],"img/clearsky.png":[function(require,module,exports) {
 module.exports = "clearsky.f444c30f.png";
@@ -12667,6 +12808,10 @@ var _Icon = require("../Icon");
 
 var _WeatherForecastItem = require("../WeatherForecastItem");
 
+var _AppState = _interopRequireDefault(require("../../services/AppState"));
+
+var _WeatherDataService = _interopRequireDefault(require("../../services/WeatherDataService"));
+
 var _rain = _interopRequireDefault(require("../../../img/rain.png"));
 
 var _clearsky = _interopRequireDefault(require("../../../img/clearsky.png"));
@@ -12684,6 +12829,10 @@ var _fog = _interopRequireDefault(require("../../../img/fog.png"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -12706,28 +12855,131 @@ var WeatherForecast =
 function (_Component) {
   _inherits(WeatherForecast, _Component);
 
-  function WeatherForecast(host) {
-    var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
-      todayData: {
-        sys: {
-          country: ''
-        }
-      }
-    };
+  function WeatherForecast(host, props) {
+    var _this;
 
     _classCallCheck(this, WeatherForecast);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(WeatherForecast).call(this, host, props));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(WeatherForecast).call(this, host, props));
+
+    _this.geoLocationData();
+
+    _AppState.default.watch('USERINPUT', _this.updateMyself);
+
+    _AppState.default.watch('UNIT', _this.computeUnit);
+
+    _AppState.default.watch('SHOWFAVOURITE', _this.updateMyself);
+
+    _AppState.default.watch('SHOWFROMHISTORY', _this.updateMyself);
+
+    return _this;
   }
 
   _createClass(WeatherForecast, [{
+    key: "init",
+    value: function init() {
+      var _this2 = this;
+
+      ['updateMyself', 'geoLocationData', 'computeUnit', 'updateFavourite'].forEach(function (methodName) {
+        return _this2[methodName] = _this2[methodName].bind(_this2);
+      });
+      this.apiData = null;
+      this.apiData1 = null;
+      this.state = {
+        weatherType: 'weather',
+        favourite: localStorage.getItem('favourite') ? JSON.parse(localStorage.getItem('favourite')) : [],
+        unit: 'metric',
+        city: null,
+        country: null,
+        celsium: 'C°',
+        windSpeed: 'm/s'
+      };
+    }
+  }, {
+    key: "geoLocationData",
+    value: function geoLocationData() {
+      var _this3 = this;
+
+      _WeatherDataService.default.getWeatherByGeo(this.state.unit).then(function (data) {
+        _this3.apiData = data[0];
+        _this3.apiData1 = data[1];
+        _this3.state.city = _this3.apiData.name;
+        _this3.state.country = _this3.apiData.sys.country;
+
+        _this3.updateState(_this3.apiData);
+      });
+    }
+  }, {
+    key: "computeUnit",
+    value: function computeUnit(updatedUnit) {
+      var _this4 = this;
+
+      var newData = _objectSpread({}, updatedUnit);
+
+      newData.city = this.state.city;
+
+      _WeatherDataService.default.getCurrentWeather(newData.city, newData.unit).then(function (data) {
+        _this4.apiData = data[0];
+        _this4.apiData1 = data[1];
+        _this4.state.city = _this4.apiData.name;
+
+        _this4.updateState(newData);
+      });
+    }
+  }, {
+    key: "updateMyself",
+    value: function updateMyself(userinput) {
+      var _this5 = this;
+
+      _WeatherDataService.default.getCurrentWeather(userinput, this.state.unit).then(function (data) {
+        _this5.apiData = data[0];
+        _this5.apiData1 = data[1];
+        _this5.state.city = _this5.apiData.name;
+        _this5.state.country = _this5.apiData.sys.country;
+
+        _this5.updateState(_this5.apiData);
+      });
+    }
+  }, {
+    key: "checkFavourite",
+    value: function checkFavourite() {
+      var _this6 = this;
+
+      setTimeout(function () {
+        var fvBtn = document.querySelector('.favourite-btn');
+
+        if (_this6.state.favourite.includes("".concat(_this6.state.city, ", ").concat(_this6.state.country))) {
+          fvBtn.classList.add('active-fav');
+        }
+      }, 0);
+    }
+  }, {
+    key: "updateFavourite",
+    value: function updateFavourite() {
+      var favBTn = document.querySelector('.favourite-btn');
+      favBTn.classList.toggle('active-fav');
+      var favItem = this.state.favourite.indexOf("".concat(this.state.city, ", ").concat(this.state.country));
+
+      if (this.state.favourite.includes("".concat(this.state.city, ", ").concat(this.state.country))) {
+        if (favItem !== -1) {
+          this.state.favourite.splice(favItem, 1);
+        }
+      } else if (this.state.favourite.length < 5) {
+        this.state.favourite.push("".concat(this.state.city, ", ").concat(this.state.country));
+      }
+
+      localStorage.setItem('favourite', JSON.stringify(this.state.favourite));
+
+      _AppState.default.update('FAVOURITE', this.state.favourite);
+    }
+  }, {
     key: "setOdessaTips",
     value: function setOdessaTips() {
-      if (this.props.fiveDayData === undefined) {
+      if (this.apiData === undefined) {
         return '';
       }
 
-      var temp = Math.round(this.props.todayData.main.temp);
+      var temp = Math.round(this.apiData.main.temp);
 
       if (temp >= 25) {
         return 'Это вы селёдку на привозе купили, или то вам так жарко?';
@@ -12761,11 +13013,11 @@ function (_Component) {
       var description;
 
       if (index) {
-        description = this.props.fiveDayData.list[index].weather[0].main;
-      } else if (this.props.fiveDayData === undefined) {
+        description = this.apiData1.list[index].weather[0].main;
+      } else if (this.apiData === undefined) {
         description = '';
       } else {
-        description = this.props.todayData.weather[0].main;
+        description = this.apiData.weather[0].main;
       }
 
       if (description === 'Clouds') {
@@ -12801,129 +13053,148 @@ function (_Component) {
   }, {
     key: "render",
     value: function render() {
-      console.log(this.props, 'fivedayData');
-      return [{
-        tag: 'div',
-        classList: ['weather-forecast'],
-        eventHandlers: this.props.todayData.eventHandlers,
-        attributes: [{
-          name: 'id',
-          value: 'current-weather'
-        }],
-        children: [{
+      if (this.apiData && this.apiData1) {
+        this.checkFavourite();
+        return [{
           tag: 'div',
-          classList: 'weather-forecast-item-wrapper',
+          classList: ['weather-forecast'],
+          eventHandlers: this.props.todayData.eventHandlers,
+          attributes: [{
+            name: 'id',
+            value: 'current-weather'
+          }],
           children: [{
             tag: 'div',
-            classList: ['weather-forecast-info'],
+            classList: 'weather-forecast-item-wrapper',
             children: [{
               tag: 'div',
-              classList: ['weather-forecast-info__item'],
+              classList: ['weather-forecast-info'],
               children: [{
-                tag: 'h1',
-                classList: ['weather-forecast-info__city-name'],
-                content: "".concat(this.props.todayData.name, ", "),
+                tag: 'div',
+                classList: ['weather-forecast-info__item'],
                 children: [{
-                  tag: 'span',
-                  classList: ['weather-forecast-info__country-name'],
-                  content: this.props.todayData.sys.country
+                  tag: 'h1',
+                  classList: ['weather-forecast-info__city-name'],
+                  content: this.apiData.name,
+                  children: [{
+                    tag: 'span',
+                    classList: ['weather-forecast-info__country-name'],
+                    content: ", ".concat(this.apiData.sys.country)
+                  }]
+                }, {
+                  tag: 'div',
+                  classList: ['weather-forecast-info__icon-wrapper'],
+                  children: [{
+                    tag: _Icon.Icon,
+                    props: {
+                      class: 'weather-forecast-info__icon',
+                      src: this.chooseIcons(),
+                      alt: 'weather-icon'
+                    }
+                  }]
                 }]
               }, {
                 tag: 'div',
-                classList: ['weather-forecast-info__icon-wrapper'],
+                classList: ['weather-forecast-info__item'],
                 children: [{
-                  tag: _Icon.Icon,
-                  props: {
-                    class: 'weather-forecast-info__icon',
-                    src: this.chooseIcons(),
-                    alt: 'weather-icon'
-                  }
+                  tag: 'h4',
+                  classList: ['weather-forecast-info__tips'],
+                  content: this.setOdessaTips()
                 }]
               }]
             }, {
               tag: 'div',
-              classList: ['weather-forecast-info__item'],
+              classList: ['weather-forecast-add-info'],
               children: [{
-                tag: 'h4',
-                classList: ['weather-forecast-info__tips'],
-                content: this.setOdessaTips()
-              }]
-            }]
-          }, {
-            tag: 'div',
-            classList: ['weather-forecast-add-info'],
-            children: [{
-              tag: 'h2',
-              classList: ['weather-forecast-add-info__temp'],
-              children: [{
-                tag: _Temperature.Temperature,
-                props: {
-                  temperature: "".concat(Math.round(this.props.todayData.main.temp), "&deg;") + '<span class="units"> C</span>'
-                }
-              }]
-            }, {
-              tag: 'div',
-              classList: ['weather-forecast-add-info__wrapper'],
-              children: [{
-                tag: 'div',
-                classList: ['weather-forecast-add-info__wind'],
+                tag: 'h2',
+                classList: ['weather-forecast-add-info__temp'],
                 children: [{
-                  tag: _Wind.Wind,
+                  tag: 'button',
+                  classList: ['favourite-btn'],
+                  eventHandlers: {
+                    click: this.updateFavourite
+                  },
+                  attributes: [{
+                    name: 'type',
+                    value: 'button'
+                  }]
+                }, {
+                  tag: _Temperature.Temperature,
                   props: {
-                    speed: "".concat(Math.round(this.props.todayData.wind.speed), "km/h")
+                    temperature: "<span class=\"units\">".concat(Math.round(this.apiData.main.temp), " ").concat(this.state.celsium, "</span>")
                   }
                 }]
               }, {
                 tag: 'div',
-                classList: ['weather-forecast-add-info__humadity'],
+                classList: ['weather-forecast-add-info__wrapper'],
                 children: [{
                   tag: 'div',
-                  content: "".concat(this.props.todayData.main.humidity)
+                  classList: ['weather-forecast-add-info__wind'],
+                  children: [{
+                    tag: _Wind.Wind,
+                    props: {
+                      speed: "".concat(this.apiData.wind.speed, " ").concat(this.state.windSpeed)
+                    }
+                  }]
+                }, {
+                  tag: 'div',
+                  classList: ['weather-forecast-add-info__humadity'],
+                  children: [{
+                    tag: 'div',
+                    content: "".concat(this.apiData.main.humidity)
+                  }]
                 }]
               }]
             }]
+          }, {
+            tag: 'div',
+            classList: ['weather-forecast-item-box'],
+            children: [{
+              tag: _WeatherForecastItem.WeatherForecastItem,
+              props: {
+                data: this.apiData1.list[3],
+                temp: this.apiData1.list[3].main.temp,
+                src: this.chooseIcons(3),
+                unit: this.state.celsium
+              }
+            }, {
+              tag: _WeatherForecastItem.WeatherForecastItem,
+              props: {
+                data: this.apiData1.list[11],
+                temp: this.apiData1.list[11].main.temp,
+                src: this.chooseIcons(11),
+                unit: this.state.celsium
+              }
+            }, {
+              tag: _WeatherForecastItem.WeatherForecastItem,
+              props: {
+                data: this.apiData1.list[19],
+                temp: this.apiData1.list[19].main.temp,
+                src: this.chooseIcons(19),
+                unit: this.state.celsium
+              }
+            }, {
+              tag: _WeatherForecastItem.WeatherForecastItem,
+              props: {
+                data: this.apiData1.list[27],
+                temp: this.apiData1.list[27].main.temp,
+                src: this.chooseIcons(27),
+                unit: this.state.celsium
+              }
+            }, {
+              tag: _WeatherForecastItem.WeatherForecastItem,
+              props: {
+                data: this.apiData1.list[35],
+                temp: this.apiData1.list[35].main.temp,
+                src: this.chooseIcons(35),
+                unit: this.state.celsium
+              }
+            }]
           }]
-        }, {
-          tag: 'div',
-          classList: ['weather-forecast-item-box'],
-          children: [{
-            tag: _WeatherForecastItem.WeatherForecastItem,
-            props: {
-              data: this.props.fiveDayData.list[3],
-              temp: this.props.fiveDayData.list[3].main.temp,
-              src: this.chooseIcons(3)
-            }
-          }, {
-            tag: _WeatherForecastItem.WeatherForecastItem,
-            props: {
-              data: this.props.fiveDayData.list[11],
-              temp: this.props.fiveDayData.list[11].main.temp,
-              src: this.chooseIcons(11)
-            }
-          }, {
-            tag: _WeatherForecastItem.WeatherForecastItem,
-            props: {
-              data: this.props.fiveDayData.list[19],
-              temp: this.props.fiveDayData.list[19].main.temp,
-              src: this.chooseIcons(19)
-            }
-          }, {
-            tag: _WeatherForecastItem.WeatherForecastItem,
-            props: {
-              data: this.props.fiveDayData.list[27],
-              temp: this.props.fiveDayData.list[27].main.temp,
-              src: this.chooseIcons(27)
-            }
-          }, {
-            tag: _WeatherForecastItem.WeatherForecastItem,
-            props: {
-              data: this.props.fiveDayData.list[35],
-              temp: this.props.fiveDayData.list[35].main.temp,
-              src: this.chooseIcons(35)
-            }
-          }]
-        }]
-      }];
+        }];
+      }
+
+      return [''];
     }
   }]);
 
@@ -12931,7 +13202,7 @@ function (_Component) {
 }(_Component2.default);
 
 exports.default = WeatherForecast;
-},{"../../framework/Component":"js/framework/Component.js","../Temperature":"js/components/Temperature/index.js","../Wind":"js/components/Wind/index.js","../Icon":"js/components/Icon/index.js","../WeatherForecastItem":"js/components/WeatherForecastItem/index.js","../../../img/rain.png":"img/rain.png","../../../img/clearsky.png":"img/clearsky.png","../../../img/snowflake.png":"img/snowflake.png","../../../img/sunshine.png":"img/sunshine.png","../../../img/cloudy.png":"img/cloudy.png","../../../img/haze.png":"img/haze.png","../../../img/fog.png":"img/fog.png"}],"js/components/WeatherForecast/index.js":[function(require,module,exports) {
+},{"../../framework/Component":"js/framework/Component.js","../Temperature":"js/components/Temperature/index.js","../Wind":"js/components/Wind/index.js","../Icon":"js/components/Icon/index.js","../WeatherForecastItem":"js/components/WeatherForecastItem/index.js","../../services/AppState":"js/services/AppState.js","../../services/WeatherDataService":"js/services/WeatherDataService.js","../../../img/rain.png":"img/rain.png","../../../img/clearsky.png":"img/clearsky.png","../../../img/snowflake.png":"img/snowflake.png","../../../img/sunshine.png":"img/sunshine.png","../../../img/cloudy.png":"img/cloudy.png","../../../img/haze.png":"img/haze.png","../../../img/fog.png":"img/fog.png"}],"js/components/WeatherForecast/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12947,7 +13218,26 @@ Object.defineProperty(exports, "WeatherForecast", {
 var _WeatherForecast = _interopRequireDefault(require("./WeatherForecast"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./WeatherForecast":"js/components/WeatherForecast/WeatherForecast.js"}],"js/components/SearchForm/SearchForm.js":[function(require,module,exports) {
+},{"./WeatherForecast":"js/components/WeatherForecast/WeatherForecast.js"}],"js/googlePlaces/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = initialize;
+
+function initialize() {
+  var input = document.getElementById('city-input');
+  var options = {
+    types: ['(cities)'] // componentRestrictions: {country: 'ua'}
+
+  };
+  var autocomplete = new google.maps.places.Autocomplete(input, options);
+  google.maps.event.addListener(autocomplete, 'place_changed', function () {
+    var place = autocomplete.getPlace();
+  });
+}
+},{}],"js/components/SearchForm/SearchForm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12956,6 +13246,10 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 
 var _Component2 = _interopRequireDefault(require("../../framework/Component"));
+
+var _googlePlaces = _interopRequireDefault(require("../../googlePlaces"));
+
+var _AppState = _interopRequireDefault(require("../../services/AppState"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -12977,6 +13271,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+google.maps.event.addDomListener(window, 'load', _googlePlaces.default);
+
 var SearchForm =
 /*#__PURE__*/
 function (_Component) {
@@ -12989,13 +13285,74 @@ function (_Component) {
   }
 
   _createClass(SearchForm, [{
+    key: "init",
+    value: function init() {
+      var _this = this;
+
+      ['updateMyself', 'myPersonalEvent'].forEach(function (methodName) {
+        return _this[methodName] = _this[methodName].bind(_this);
+      });
+      this.state = {
+        history: null
+      };
+    }
+  }, {
+    key: "updateMyself",
+    value: function updateMyself(newState) {
+      this.updateState(newState);
+    }
+  }, {
+    key: "myPersonalEvent",
+    value: function myPersonalEvent(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var inputValue = document.getElementById('city-input').value;
+      var correctInputValue = inputValue.split(',');
+      var newValue = '';
+
+      if (localStorage.getItem('history')) {
+        this.state.history = JSON.parse(localStorage.getItem('history'));
+      } else {
+        this.state.history = [];
+      }
+
+      if (correctInputValue.length > 2) {
+        correctInputValue.splice(1, 1);
+        newValue = correctInputValue.join(',');
+      } else {
+        newValue = inputValue;
+      }
+
+      if (newValue.includes('Ukraine') || newValue.includes('ukraine')) {
+        var lowerValue = newValue.toLowerCase();
+        newValue = lowerValue.replace(/ukraine/gi, 'UA');
+      }
+
+      if (this.state.history.includes(newValue)) {
+        return;
+      }
+
+      if (this.state.history.length > 4) {
+        this.state.history.shift();
+        this.state.history.push(newValue);
+      } else {
+        this.state.history.push(newValue);
+      }
+
+      localStorage.setItem('history', JSON.stringify(this.state.history));
+
+      _AppState.default.update('USERINPUT', newValue);
+    }
+  }, {
     key: "render",
     value: function render() {
       return [{
         tag: 'form',
-        eventHandlers: this.props.eventHandlers,
+        eventHandlers: {
+          submit: this.myPersonalEvent
+        },
         classList: ['forecast-form'],
-        attributes: this.props.attributes,
+        attributes: [],
         children: [{
           tag: 'input',
           classList: ['forecast-form__input'],
@@ -13037,7 +13394,7 @@ function (_Component) {
 }(_Component2.default);
 
 exports.default = SearchForm;
-},{"../../framework/Component":"js/framework/Component.js"}],"js/components/SearchForm/index.js":[function(require,module,exports) {
+},{"../../framework/Component":"js/framework/Component.js","../../googlePlaces":"js/googlePlaces/index.js","../../services/AppState":"js/services/AppState.js"}],"js/components/SearchForm/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13053,7 +13410,556 @@ Object.defineProperty(exports, "SearchForm", {
 var _SearchForm = _interopRequireDefault(require("./SearchForm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./SearchForm":"js/components/SearchForm/SearchForm.js"}],"js/components/App/App.js":[function(require,module,exports) {
+},{"./SearchForm":"js/components/SearchForm/SearchForm.js"}],"js/components/SearchHistory/SearchHistory.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _Component2 = _interopRequireDefault(require("../../framework/Component"));
+
+var _AppState = _interopRequireDefault(require("../../services/AppState"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var SearchHistory =
+/*#__PURE__*/
+function (_Component) {
+  _inherits(SearchHistory, _Component);
+
+  function SearchHistory(host, props) {
+    var _this;
+
+    _classCallCheck(this, SearchHistory);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(SearchHistory).call(this, host, props));
+
+    _AppState.default.watch('USERINPUT', _this.updateMyself);
+
+    return _this;
+  }
+
+  _createClass(SearchHistory, [{
+    key: "init",
+    value: function init() {
+      var _this2 = this;
+
+      ['updateMyself'].forEach(function (methodName) {
+        return _this2[methodName] = _this2[methodName].bind(_this2);
+      });
+    }
+  }, {
+    key: "getWeatherFromHistory",
+    value: function getWeatherFromHistory(e) {
+      var newValue;
+
+      if (e.target.id.includes('Ukraine') || e.target.id.includes('ukraine')) {
+        var lowerValue = e.target.id.toLowerCase();
+        newValue = lowerValue.replace(/ukraine/gi, 'UA');
+      } else {
+        newValue = e.target.id;
+      }
+
+      _AppState.default.update('SHOWFROMHISTORY', newValue);
+    }
+  }, {
+    key: "updateMyself",
+    value: function updateMyself() {
+      this._render();
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      var srchistory = JSON.parse(localStorage.getItem('history'));
+
+      if (srchistory) {
+        return srchistory.map(function (item) {
+          return {
+            tag: 'p',
+            classList: ['search-city'],
+            content: item,
+            attributes: [{
+              name: 'id',
+              value: item
+            }],
+            eventHandlers: {
+              click: _this3.getWeatherFromHistory
+            }
+          };
+        });
+      }
+
+      return '';
+    }
+  }]);
+
+  return SearchHistory;
+}(_Component2.default);
+
+exports.default = SearchHistory;
+},{"../../framework/Component":"js/framework/Component.js","../../services/AppState":"js/services/AppState.js"}],"js/components/SearchHistory/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "SearchHistory", {
+  enumerable: true,
+  get: function () {
+    return _SearchHistory.default;
+  }
+});
+
+var _SearchHistory = _interopRequireDefault(require("./SearchHistory"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+},{"./SearchHistory":"js/components/SearchHistory/SearchHistory.js"}],"js/components/FavouriteList/FavouriteList.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _Component2 = _interopRequireDefault(require("../../framework/Component"));
+
+var _AppState = _interopRequireDefault(require("../../services/AppState"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var FavouriteList =
+/*#__PURE__*/
+function (_Component) {
+  _inherits(FavouriteList, _Component);
+
+  function FavouriteList(host, props) {
+    var _this;
+
+    _classCallCheck(this, FavouriteList);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(FavouriteList).call(this, host, props));
+
+    _AppState.default.watch('FAVOURITE', _this.updateMyself);
+
+    return _this;
+  }
+
+  _createClass(FavouriteList, [{
+    key: "init",
+    value: function init() {
+      var _this2 = this;
+
+      ['updateMyself', 'getWeatherFromFavorite', 'removeFavItem'].forEach(function (methodName) {
+        return _this2[methodName] = _this2[methodName].bind(_this2);
+      });
+      this.state = {
+        favourite: JSON.parse(localStorage.getItem('favourite'))
+      };
+    }
+  }, {
+    key: "getWeatherFromFavorite",
+    value: function getWeatherFromFavorite(e) {
+      _AppState.default.update('SHOWFAVOURITE', e.target.id);
+    }
+  }, {
+    key: "updateMyself",
+    value: function updateMyself(newState) {
+      this.state.favourite = newState;
+      this.updateState(newState);
+    }
+  }, {
+    key: "removeFavItem",
+    value: function removeFavItem(e) {
+      var favItem = this.state.favourite.indexOf(e.target.parentNode.firstChild.id);
+      this.state.favourite.splice(favItem, 1);
+      localStorage.setItem('favourite', JSON.stringify(this.state.favourite));
+
+      _AppState.default.update('FAVOURITE', this.state.favourite);
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this3 = this;
+
+      var favItems = JSON.parse(localStorage.getItem('favourite'));
+
+      if (favItems) {
+        return favItems.map(function (item) {
+          return {
+            tag: 'div',
+            classList: ['favorite-item'],
+            children: [{
+              tag: 'p',
+              classList: ['favourite-city'],
+              content: item,
+              attributes: [{
+                name: 'id',
+                value: item
+              }],
+              eventHandlers: {
+                click: _this3.getWeatherFromFavorite
+              }
+            }, {
+              tag: 'button',
+              classList: ['clear-button'],
+              attributes: [{
+                name: 'type',
+                value: 'button'
+              }],
+              eventHandlers: {
+                click: _this3.removeFavItem
+              },
+              children: [{
+                tag: 'i',
+                classList: ['fa', 'fa-trash']
+              }]
+            }]
+          };
+        });
+      }
+
+      return '';
+    }
+  }]);
+
+  return FavouriteList;
+}(_Component2.default);
+
+exports.default = FavouriteList;
+},{"../../framework/Component":"js/framework/Component.js","../../services/AppState":"js/services/AppState.js"}],"js/components/FavouriteList/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "FavouriteList", {
+  enumerable: true,
+  get: function () {
+    return _FavouriteList.default;
+  }
+});
+
+var _FavouriteList = _interopRequireDefault(require("./FavouriteList"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+},{"./FavouriteList":"js/components/FavouriteList/FavouriteList.js"}],"js/components/ButtonsBox/ButtonsBox.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _Component2 = _interopRequireDefault(require("../../framework/Component"));
+
+var _AppState = _interopRequireDefault(require("../../services/AppState"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var ButtonsBox =
+/*#__PURE__*/
+function (_Component) {
+  _inherits(ButtonsBox, _Component);
+
+  function ButtonsBox(host, props) {
+    _classCallCheck(this, ButtonsBox);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(ButtonsBox).call(this, host, props));
+  }
+
+  _createClass(ButtonsBox, [{
+    key: "init",
+    value: function init() {
+      var _this = this;
+
+      ['onClick', 'updateMyself'].forEach(function (methodName) {
+        return _this[methodName] = _this[methodName].bind(_this);
+      });
+      this.state = {
+        city: 'null',
+        unit: 'metric',
+        celsium: 'C°',
+        windSpeed: 'm/s'
+      };
+    }
+  }, {
+    key: "updateMyself",
+    value: function updateMyself(newState) {
+      this.updateState(newState);
+    }
+  }, {
+    key: "onClick",
+    value: function onClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var classNames = _toConsumableArray(e.target.classList);
+
+      if (classNames.includes('units-btn')) {
+        if (this.state.unit === 'metric') {
+          this.state.unit = 'imperial';
+          this.state.celsium = 'F°';
+          this.state.windSpeed = 'mph';
+        } else {
+          this.state.unit = 'metric';
+          this.state.celsium = 'C°';
+          this.state.windSpeed = 'm/s';
+        }
+
+        _AppState.default.update('UNIT', this.state);
+      }
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      return [{
+        tag: 'div',
+        classList: 'button-box',
+        eventHandlers: {
+          click: this.onClick
+        },
+        children: [{
+          tag: 'button',
+          classList: ['button-box__item', 'units-btn'],
+          content: 'С/F',
+          attributes: [{
+            name: 'type',
+            value: 'button'
+          }]
+        }]
+      }];
+    }
+  }]);
+
+  return ButtonsBox;
+}(_Component2.default);
+
+exports.default = ButtonsBox;
+},{"../../framework/Component":"js/framework/Component.js","../../services/AppState":"js/services/AppState.js"}],"js/components/ButtonsBox/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "ButtonsBox", {
+  enumerable: true,
+  get: function () {
+    return _ButtonsBox.default;
+  }
+});
+
+var _ButtonsBox = _interopRequireDefault(require("./ButtonsBox"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+},{"./ButtonsBox":"js/components/ButtonsBox/ButtonsBox.js"}],"js/components/WeatherInfo/WeatherInfo.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _Component2 = _interopRequireDefault(require("../../framework/Component"));
+
+var _SearchHistory = require("../SearchHistory");
+
+var _FavouriteList = require("../FavouriteList");
+
+var _ButtonsBox = require("../ButtonsBox");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+var WeatherTools =
+/*#__PURE__*/
+function (_Component) {
+  _inherits(WeatherTools, _Component);
+
+  function WeatherTools(host, props) {
+    _classCallCheck(this, WeatherTools);
+
+    return _possibleConstructorReturn(this, _getPrototypeOf(WeatherTools).call(this, host, props));
+  }
+
+  _createClass(WeatherTools, [{
+    key: "init",
+    value: function init() {
+      this.resetSerchHistory = this.resetSerchHistory.bind(this);
+    }
+  }, {
+    key: "resetSerchHistory",
+    value: function resetSerchHistory() {
+      localStorage.removeItem('history');
+
+      this._render();
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      return [{
+        tag: 'div',
+        classList: ['additional'],
+        children: [{
+          tag: 'div',
+          classList: ['additional__tools'],
+          children: [{
+            tag: 'div',
+            classList: ['additional__tools-item', 'additional__tools-item--1'],
+            children: [{
+              tag: 'div',
+              classList: ['history-head'],
+              content: '<h3 class="history-h3"> <i class="fa fa-clock-o" aria-hidden="true"></i>История</h3>',
+              children: [{
+                tag: 'button',
+                classList: ['clear-button'],
+                attributes: [{
+                  name: 'type',
+                  value: 'button'
+                }],
+                eventHandlers: {
+                  click: this.resetSerchHistory
+                },
+                children: [{
+                  tag: 'i',
+                  classList: ['fa', 'fa-trash']
+                }]
+              }]
+            }, {
+              tag: _SearchHistory.SearchHistory
+            }]
+          }, {
+            tag: 'div',
+            classList: ['additional__tools-item', 'additional__tools-item--2'],
+            children: [{
+              tag: 'div',
+              classList: ['favorite-head'],
+              content: '<h3 class="history-h3">Шикарные места <i class="fa fa-heart" aria-hidden="true"></i></h3>'
+            }, {
+              tag: _FavouriteList.FavouriteList,
+              classList: ['test']
+            }]
+          }, {
+            tag: 'div',
+            classList: ['additional__tools-item', 'additional__tools-item--3'],
+            children: [{
+              tag: 'div',
+              classList: ['favorite-head'],
+              content: '<h3 class="history-h3">Величины</h3>',
+              children: [{
+                tag: _ButtonsBox.ButtonsBox,
+                classList: ['test']
+              }]
+            }]
+          }]
+        }]
+      }];
+    }
+  }]);
+
+  return WeatherTools;
+}(_Component2.default);
+
+exports.default = WeatherTools;
+},{"../../framework/Component":"js/framework/Component.js","../SearchHistory":"js/components/SearchHistory/index.js","../FavouriteList":"js/components/FavouriteList/index.js","../ButtonsBox":"js/components/ButtonsBox/index.js"}],"js/components/WeatherInfo/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "WeatherInfo", {
+  enumerable: true,
+  get: function () {
+    return _WeatherInfo.default;
+  }
+});
+
+var _WeatherInfo = _interopRequireDefault(require("./WeatherInfo"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+},{"./WeatherInfo":"js/components/WeatherInfo/WeatherInfo.js"}],"js/components/App/App.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13071,7 +13977,11 @@ var _Wind = require("../Wind");
 
 var _SearchForm = require("../SearchForm");
 
+var _WeatherInfo = require("../WeatherInfo");
+
 var _WeatherForecastItem = require("../WeatherForecastItem");
+
+var _ButtonsBox = require("../ButtonsBox");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -13099,131 +14009,76 @@ function (_Component) {
   _inherits(App, _Component);
 
   function App(host) {
-    var _this;
-
     _classCallCheck(this, App);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, host));
+    return _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, host)); // this._render();
+  } // onClick(e) {}
 
-    _this._render();
-
-    return _this;
-  }
 
   _createClass(App, [{
-    key: "beforeRender",
-    value: function beforeRender() {
-      var _this2 = this;
+    key: "init",
+    value: function init() {} // eslint-disable-next-line class-methods-use-this
 
-      if (navigator.geolocation) {
-        var lon;
-        var lat;
-        var unit = 'metric';
-        var apiKey = 'd5f2fdfdab2f973dc4e4e3aa87a6ccfb';
-        navigator.geolocation.getCurrentPosition(function (position) {
-          lon = position.coords.longitude;
-          lat = position.coords.latitude;
-          var urlArr = ["https://api.openweathermap.org/data/2.5/weather?lat=".concat(lat, "&lon=").concat(lon, "&units=").concat(unit, "&appid=").concat(apiKey), "https://api.openweathermap.org/data/2.5/forecast?lat=".concat(lat, "&lon=").concat(lon, "&units=").concat(unit, "&appid=").concat(apiKey)];
-          Promise.all(urlArr.map(function (url) {
-            return fetch(url).then(function (response) {
-              if (response.ok) {
-                return response.json();
-              }
-
-              throw new Error(response.statusText);
-            }).then(function (searchResult) {
-              return searchResult;
-            });
-          })).then(function (arrPromise) {
-            _this2._render(arrPromise);
-          });
-        });
-      }
-
-      this.onSubmit = this.onSubmit.bind(this);
-      this.onClick = this.onClick.bind(this);
-    }
-  }, {
-    key: "onSubmit",
-    value: function onSubmit(event) {
-      var _this3 = this;
-
-      event.preventDefault();
-      event.stopPropagation();
-      var APIKEY = 'd5f2fdfdab2f973dc4e4e3aa87a6ccfb';
-      var searchValue = event.target.elements[0].value;
-
-      var search = function search(searchValue) {
-        var urlArr = ["https://api.openweathermap.org/data/2.5/weather?q=".concat(searchValue, "&units=metric&&APPID=").concat(APIKEY), "https://api.openweathermap.org/data/2.5/forecast?q=".concat(searchValue, "&units=metric&&APPID=").concat(APIKEY)];
-        Promise.all(urlArr.map(function (url) {
-          return fetch(url).then(function (response) {
-            if (response.ok) {
-              return response.json();
-            }
-
-            throw new Error(response.statusText);
-          }).then(function (searchResult) {
-            return searchResult;
-          });
-        })).then(function (arrPromise) {
-          _this3._render(arrPromise);
-        });
-      };
-
-      search(searchValue);
-    }
-  }, {
-    key: "onClick",
-    value: function onClick(e) {}
   }, {
     key: "render",
-    value: function render(data) {
-      if (data === undefined) {
-        data = '';
-      }
-
-      this.props.data = data;
+    value: function render() {
+      // if (data === undefined) {
+      //   data = '';
+      // }
+      // this.props.data = data;
       var t1 = document.createDocumentFragment();
       new _Temperature.Temperature(t1, {
         temperature: 25,
         unit: 'C'
       });
-      var w1 = document.createDocumentFragment();
+      var w1 = document.createDocumentFragment(); // eslint-disable-next-line no-new
+
       new _Wind.Wind(w1, {
         speed: 100500,
         unit: 'mph'
-      });
-
-      if (data === '') {
-        return [{
-          tag: 'div',
-          classList: ['container'],
-          children: [{
-            tag: 'div',
-            classList: ['row'],
-            children: [{
-              tag: 'h3',
-              content: 'Weather forecast from Odessa mother',
-              classList: ['main-title']
-            }, {
-              tag: _SearchForm.SearchForm,
-              props: {
-                eventHandlers: [{
-                  eventType: 'submit',
-                  handler: this.onSubmit
-                }],
-                attributes: [{
-                  name: 'id',
-                  value: 'search-form'
-                }]
-              }
-            }]
-          }, {
-            tag: 'footer',
-            content: 'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>'
-          }]
-        }];
-      }
+      }); // if () {
+      //   return [
+      //     {
+      //       tag: 'div',
+      //       classList: ['container'],
+      //       children: [
+      //         {
+      //           tag: 'div',
+      //           classList: ['row'],
+      //           children: [
+      //             {
+      //               tag: 'h3',
+      //               content: 'Weather forecast from Odessa mother',
+      //               classList: ['main-title'],
+      //             },
+      //             {
+      //               tag: SearchForm,
+      //               props: {
+      //                 eventHandlers: [
+      //                   {
+      //                     eventType: 'submit',
+      //                     handler: this.onSubmit,
+      //                   },
+      //                 ],
+      //                 attributes: [
+      //                   {
+      //                     name: 'id',
+      //                     value: 'search-form',
+      //                   },
+      //                 ],
+      //               },
+      //             },
+      //           ],
+      //         },
+      //         {
+      //           tag: 'footer',
+      //           content:
+      //             'Для моей настоящей одесской мамы Лили :) <span class="copyright">C любовью <a class="link" href="https://github.com/CuteShaun">сuteshaun</a> из <a class="link" href="http://kottans.org/">Kottans</a></span>',
+      //         },
+      //       ],
+      //     },
+      //   ];
+      // }
 
       return [{
         tag: 'div',
@@ -13236,23 +14091,29 @@ function (_Component) {
             content: 'Weather forecast from Odessa mother',
             classList: ['main-title']
           }, {
-            tag: _SearchForm.SearchForm,
-            props: {
-              eventHandlers: [{
-                eventType: 'submit',
-                handler: this.onSubmit
-              }],
-              attributes: [{
-                name: 'id',
-                value: 'search-form'
+            tag: 'div',
+            classList: ['content-wrapper'],
+            children: [{
+              tag: 'div',
+              classList: ['content-wrapper__item', 'content-wrapper__item--1'],
+              children: [{
+                tag: _SearchForm.SearchForm,
+                props: {
+                  attributes: [{
+                    name: 'id',
+                    value: 'search-form'
+                  }]
+                }
+              }, {
+                tag: _WeatherForecast.WeatherForecast,
+                props: {
+                  todayData: 'fa',
+                  fiveDayData: 'dadad'
+                }
+              }, {
+                tag: _WeatherInfo.WeatherInfo
               }]
-            }
-          }, {
-            tag: _WeatherForecast.WeatherForecast,
-            props: {
-              todayData: data[0],
-              fiveDayData: data[1]
-            }
+            }]
           }]
         }, {
           tag: 'footer',
@@ -13266,7 +14127,7 @@ function (_Component) {
 }(_Component2.default);
 
 exports.default = App;
-},{"../../framework/Component":"js/framework/Component.js","../WeatherForecast":"js/components/WeatherForecast/index.js","../Temperature":"js/components/Temperature/index.js","../Wind":"js/components/Wind/index.js","../SearchForm":"js/components/SearchForm/index.js","../WeatherForecastItem":"js/components/WeatherForecastItem/index.js"}],"js/components/App/index.js":[function(require,module,exports) {
+},{"../../framework/Component":"js/framework/Component.js","../WeatherForecast":"js/components/WeatherForecast/index.js","../Temperature":"js/components/Temperature/index.js","../Wind":"js/components/Wind/index.js","../SearchForm":"js/components/SearchForm/index.js","../WeatherInfo":"js/components/WeatherInfo/index.js","../WeatherForecastItem":"js/components/WeatherForecastItem/index.js","../ButtonsBox":"js/components/ButtonsBox/index.js"}],"js/components/App/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13317,7 +14178,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61010" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57633" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);

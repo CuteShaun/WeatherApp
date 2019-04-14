@@ -10,7 +10,5 @@ export default function initialize() {
 
   google.maps.event.addListener(autocomplete, 'place_changed', () => {
     const place = autocomplete.getPlace();
-    // let lat = place.geometry.location.lat();
-    // let lng = place.geometry.location.lng();
   });
 }

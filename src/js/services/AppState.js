@@ -1,6 +1,8 @@
 class AppState {
   constructor() {
-    this.watchers = {};
+    this.watchers = {
+      // 'ENTITY': [ watcher1, watcher2 ],
+    };
   }
 
   watch(entity, watcher) {
@@ -13,8 +15,6 @@ class AppState {
 
   update(entity, newValue) {
     this.watchers[entity] && this.watchers[entity].forEach(watcher => watcher(newValue));
-
-    console.log(this.watchers, entity, newValue);
   }
 }
 

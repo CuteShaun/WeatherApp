@@ -3,7 +3,9 @@ import { WeatherForecast } from '../WeatherForecast';
 import { Temperature } from '../Temperature';
 import { Wind } from '../Wind';
 import { SearchForm } from '../SearchForm';
+import { WeatherInfo } from '../WeatherInfo';
 import { WeatherForecastItem } from '../WeatherForecastItem';
+import { ButtonsBox } from '../ButtonsBox';
 
 export default class App extends Component {
   constructor(host) {
@@ -13,6 +15,9 @@ export default class App extends Component {
 
   // onClick(e) {}
 
+  init() {}
+
+  // eslint-disable-next-line class-methods-use-this
   render() {
     // if (data === undefined) {
     //   data = '';
@@ -24,6 +29,7 @@ export default class App extends Component {
     new Temperature(t1, { temperature: 25, unit: 'C' });
 
     const w1 = document.createDocumentFragment();
+    // eslint-disable-next-line no-new
     new Wind(w1, { speed: 100500, unit: 'mph' });
 
     // if () {
@@ -87,23 +93,37 @@ export default class App extends Component {
               },
 
               {
-                tag: SearchForm,
-                props: {
-                  attributes: [
-                    {
-                      name: 'id',
-                      value: 'search-form',
-                    },
-                  ],
-                },
-              },
+                tag: 'div',
+                classList: ['content-wrapper'],
+                children: [
+                  {
+                    tag: 'div',
+                    classList: ['content-wrapper__item', 'content-wrapper__item--1'],
+                    children: [
+                      {
+                        tag: SearchForm,
+                        props: {
+                          attributes: [
+                            {
+                              name: 'id',
+                              value: 'search-form',
+                            },
+                          ],
+                        },
+                      },
 
-              {
-                tag: WeatherForecast,
-                props: {
-                  todayData: 'fa',
-                  fiveDayData: 'dadad',
-                },
+                      {
+                        tag: WeatherForecast,
+                        props: {
+                          todayData: 'fa',
+                          fiveDayData: 'dadad',
+                        },
+                      },
+
+                      { tag: WeatherInfo },
+                    ],
+                  },
+                ],
               },
             ],
           },

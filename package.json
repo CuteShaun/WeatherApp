@@ -1,9 +1,9 @@
 {
   "name": "Weather",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "repository": "git@github.com:CuteShaun/WeatherApp.git",
-  "homepage": "https://github.com/CuteShaun/WeatherApp",
+  "homepage": "https://github.com/CuteShaun",
   "author": "Andrey Tsapko andrewtsapko@gmail.com",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,7 @@
     "build-dev": "parcel build ./src/index.html --no-minify --public-url ./",
     "build": "parcel src/index.html --out-dir production/ --public-url ./",
     "prebuild": "shx rm -rf dist/",
-    "publish": "push-dir --dir=dist --branch=gh-pages"
+    "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup"
   },
   "devDependencies": {
     "autoprefixer": "^9.4.9",
