@@ -12,7 +12,7 @@
     "build-dev": "parcel build ./src/index.html --no-minify --public-url ./",
     "build": "parcel src/index.html --out-dir production/ --public-url ./",
     "prebuild": "shx rm -rf dist/",
-    "deploy": "push-dir --dir=dist --branch=gh-pages --cleanup"
+    "deploy": "push-dir --dir=production/ --branch=gh-pages --cleanup"
   },
   "devDependencies": {
     "autoprefixer": "^9.4.9",
